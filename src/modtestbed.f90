@@ -34,7 +34,7 @@ use netcdf
 
 implicit none
 PRIVATE
-PUBLIC :: inittestbed, testbednudge, exittestbed, ltestbed,  &
+PUBLIC :: inittestbed, testbednudge, exittestbed, ltestbed,  & 
           testbed_getinttime, ntnudge, nknudge,              &
           tb_time,tb_ps,tb_qts,tb_thls,tb_wqs,tb_wts,        &
           tb_z0h, tb_z0m, tb_alb, tb_Qnet,                   &
@@ -42,6 +42,7 @@ PUBLIC :: inittestbed, testbednudge, exittestbed, ltestbed,  &
           tb_dqtdxls,tb_dqtdyls,                             &
           tb_qtadv,tb_thladv,tb_uadv,tb_vadv,                &
           tb_sv,tb_svadv,tb_svs,                             &  !#sb3
+          ltb_sv,                                            &  !#sb3
           tb_tsoilav,tb_phiwav,                              &
           tbrad_p, tbrad_ql, tbrad_qv, tbrad_t, tbrad_o3
 SAVE
@@ -54,9 +55,11 @@ SAVE
   real, dimension(:,:), allocatable :: tb_svs  !#sb3                                  
   real, dimension(:)  , allocatable :: tb_time, tb_ps, tb_qts, tb_thls, tb_wqs, tb_wts, tb_z0h, tb_z0m, tb_alb, tb_Qnet
   real :: tb_taunudge = 10800.      &
-         ,tb_zminnudge = 0.           ! #tb
+         ,tb_zminnudge = 0.         &  !#tb
+         ,tb_zmidnudge = 0.            !#tb
   logical :: ltestbed = .false.,    &
              ltb_nudge = .false.,   &
+             ltb_loadsv= .false.,   & 
              ltb_sv    = .false.,   &  !#sb3
              ltb_u,ltb_v,ltb_w,ltb_thl,ltb_qt
   integer :: nknudge,ntnudge
@@ -73,19 +76,22 @@ contains
     use modnudge,  only : lnudge         ! #tb
     
     implicit none
-
+    
+    real, dimension(:,:,:), allocatable ::  dumsv   !#sb3
     real, dimension(:,:), allocatable :: dumomega,dumqv,dumql,dumqi,dumt,dumpf, dumo3,&
                                          dumheight,dumqt,dumthl,dumu,dumv,dumw, &
                                          dumug,dumvg,dumqtadv,dumthladv,dumuadv,dumvadv, &
                                          dumqadv,dumladv,dumiadv,dumtadv, &
                                          dumtsoilav,dumphiwav,dumswi,&
                                          dumlwnet,dumswnet
+    real, dimension(:,:), allocatable :: dumsvs   ! #sb3
     real, dimension(:), allocatable :: dumheights
 
     real :: dumphifc,dumphiwp
 
     INTEGER  NCID, STATUS, VARID, timID
     INTEGER start2(2), count2(2)
+    INTEGER start_sv(3), count_sv(3),start_svs(2), count_svs(2) 
     character(len = nf90_max_name) :: RecordDimName
 
     integer :: ierr,i,k,ik,nknudgep1,nknudges
@@ -94,7 +100,9 @@ contains
     namelist /NAMTESTBED/                   &
         ltestbed, ltb_nudge, tb_taunudge    &
        ,tb_zminnudge                        & !#tb
-       ,ltb_sv                                !#sb3
+       ,tb_zmidnudge                        & !#tb
+       ,ltb_loadsv                            !#sb3
+       ! ltb_sv                               !#sb3
 
     if(myid==0)then
 
@@ -111,12 +119,23 @@ contains
          ! write(6,*) " OVERRIDING, setting lnudge=.false. "
      endif ! #tb END
 
-
+     ! check for
+     if (tb_zmidnudge.lt.tb_zminnudge) then
+        tb_zmidnudge = tb_zminnudge
+     endif
+     
+     if (nsv>0 .and. ltb_loadsv) then
+       ltb_sv = .true.
+     endif
+      
+      
     end if
  
     call MPI_BCAST(ltestbed     , 1,MPI_LOGICAL,0,comm3d,mpierr)
     call MPI_BCAST(ltb_nudge    , 1,MPI_LOGICAL,0,comm3d,mpierr)
+    call MPI_BCAST(tb_taunudge  , 1,MY_REAL    ,0,comm3d,mpierr)
     call MPI_BCAST(tb_zminnudge , 1,MY_REAL    ,0,comm3d,mpierr) !#tb
+    call MPI_BCAST(tb_zmidnudge , 1,MY_REAL    ,0,comm3d,mpierr) !#tb
     call MPI_BCAST(ltb_sv       , 1,MPI_LOGICAL,0,comm3d,mpierr) !#sb3
     
     if (.not. ltestbed) return
@@ -172,8 +191,9 @@ contains
                  tb_qtadv  (ntnudge,k1), &
                  tb_thladv (ntnudge,k1), &
                  tb_uadv   (ntnudge,k1), &
-                 tb_vadv   (ntnudge,k1), &
-                 tb_time   (ntnudge), &
+                 tb_vadv   (ntnudge,k1) )
+                 
+    allocate(    tb_time   (ntnudge), &
                  tb_ps     (ntnudge), &
                  tb_qts    (ntnudge), &
                  tb_thls   (ntnudge), &
@@ -182,18 +202,26 @@ contains
                  tb_z0m    (ntnudge), &
                  tb_z0h    (ntnudge), &
                  tb_alb    (ntnudge), &
-                 tb_Qnet   (ntnudge), &
-                 tb_tsoilav(ntnudge,ksoilmax), &
-                 tb_phiwav (ntnudge,ksoilmax), &
-                 tbrad_p    (ntnudge, nknudge), &
+                 tb_Qnet   (ntnudge) )
+                 
+    allocate(    tb_tsoilav(ntnudge,ksoilmax), &
+                 tb_phiwav (ntnudge,ksoilmax) )
+                 
+    allocate(    tbrad_p    (ntnudge, nknudge), &
                  tbrad_t    (ntnudge, nknudge), &
                  tbrad_qv   (ntnudge, nknudge), &
                  tbrad_ql   (ntnudge, nknudge), &
-                 tbrad_o3   (ntnudge, nknudge), &
-                 tb_sv      (ntnudge,k1,nsv),   &  ! #sb3 
+                 tbrad_o3   (ntnudge, nknudge) )
+                 
+    if (nsv>0) then             
+     allocate(   tb_sv      (ntnudge,k1,nsv),   &  ! #sb3 
                  tb_svadv   (ntnudge,k1,nsv),   &  ! #sb3
                  tb_svs     (ntnudge,nsv)       &  ! #sb3
-                 )
+             )
+     tb_sv = 0
+     tb_svadv = 0
+     tb_svs = 0
+    endif
 
      tnudge = tb_taunudge     !nudging timescale
 
@@ -262,7 +290,11 @@ contains
                  dumphiwav  (nknudges,ntnudge), & 
                  dumswi     (nknudges,ntnudge) &
                  )
-
+        if (nsv>0 .and. ltb_loadsv) then
+           allocate(dumsv    (nsv,nknudge,ntnudge) ) ! 3D fields
+           ! add dumsv_adv
+           allocate(dumsvs   (nsv,ntnudge) )         ! surface values 
+        endif
 
         !--- timeseries ---
 
@@ -537,8 +569,38 @@ contains
         if (status /= nf90_noerr) call handle_err(status)
 
         dumswi = ( dumphiwav - dumphiwp ) / ( dumphifc - dumphiwp )   !soil wetness index, using input values for wilting point and field capacity
-          
+        
+        ! loading scalars
+        if (nsv>0 .and. ltb_loadsv) then
 
+          ! ltb_sv = .true.  <- done before
+          start_svs = (/ 1       , 1       /)
+          count_svs = (/ nsv     , ntnudge /)
+          start_sv  = (/ 1       , 1       , 1       /)
+          count_sv  = (/ nsv     , nknudge , ntnudge /)  
+          ! other options:
+          !2)
+          ! count_sv  = (/ nsv     , ntnudge , nknudge /) 
+          !3)
+          ! count_sv  = (/ nknudge , ntnudge ,  nsv     /)
+          !           
+          ! surface timeseries
+          write(6,*) 'Now loading svs variables' 
+          write(6,*) count_svs
+          STATUS = NF90_INQ_VARID(NCID, 'sv_flx', VARID)
+          if (STATUS .ne. nf90_noerr) call handle_err(STATUS)
+          STATUS = NF90_GET_VAR (NCID, VARID, dumsvs, start=start_svs, count=count_svs)
+          if (STATUS .ne. nf90_noerr) call handle_err(STATUS)
+          
+          write(6,*) 'Now loading sv variables' 
+          write(6,*) count_sv
+          !  sv profiles for nsv species
+          STATUS = NF90_INQ_VARID(NCID, 'sv', VARID)
+          if (STATUS .ne. nf90_noerr) call handle_err(STATUS)
+          STATUS = NF90_GET_VAR (NCID, VARID, dumsv, start=start_sv, count=count_sv)
+          if (STATUS .ne. nf90_noerr) call handle_err(STATUS)
+
+        endif
          
         !--- close nc file ---
         STATUS = NF90_CLOSE(NCID)  
@@ -575,7 +637,18 @@ contains
             tb_thladv (i,k)   = dumthladv (ik,i) + fac * ( dumthladv (ik-1,i)    - dumthladv (ik,i)    )
 
             !if (i.eq.1) write(6,*)  k, zf(k), " : ", ik, dumheight(ik,i), ik-1, dumheight(ik-1,i)
-
+            ! and for scalars
+            
+            ! if (ltb_sv .and. i.eq.1) then
+            if (ltb_sv) then
+              !tb_sv(k,:) = dumsv(:,ik0) + fac * ( dumsv(:,ik1) - dumsv(:,ik0) )
+              tb_sv(i,k,:) = dumsv(:,ik,i) + fac * ( dumsv(:,ik-1,i) - dumsv(:,ik,i) )
+              ! outputs
+              !              write(0,'(a,i8,f8.2,i8,f15.7,i8,2f15.7,f20.3)')  'inittestbed: sv field loaded from scm_in.nc: ', k, zf(k), &
+              !                                                 ik0, dumheight(ik0,i), ik1, dumheight(ik1,i), fac, tb_sv(k,6)
+              ! write(0,'(a,i8,f8.2,i8,f15.7,i8,2f15.7,f20.3)')  'inittestbed: sv field loaded from scm_in.nc: ', k, zf(k), &
+              !                                                 ik, dumheight(ik,i), ik-1, dumheight(ik-1,i), fac, tb_sv(i,k,6)
+            endif           
           enddo
           
           !
@@ -646,7 +719,11 @@ contains
         deallocate(dumtsoilav)
         deallocate(dumphiwav)
         deallocate(dumswi)
-
+        
+        if (ltb_sv) then
+          deallocate(dumsv)
+          deallocate(dumsvs)
+        endif
 
         !--- do some output to screen ---
 !        do i=1,2
@@ -710,8 +787,11 @@ contains
     call MPI_BCAST(tbrad_t      ,ntnudge*nknudge,MY_REAL    ,0,comm3d,mpierr)
     call MPI_BCAST(tbrad_o3     ,ntnudge*nknudge,MY_REAL    ,0,comm3d,mpierr)
     
-    call MPI_BCAST(tb_sv        ,ntnudge*k1*nsv,MY_REAL    ,0,comm3d,mpierr)
-
+    if (nsv>0) then 
+      call MPI_BCAST(tb_sv        ,ntnudge*k1*nsv ,MY_REAL    ,0,comm3d,mpierr)
+      call MPI_BCAST(tb_svs       ,ntnudge*nsv    ,MY_REAL    ,0,comm3d,mpierr)
+    endif 
+    
     ltb_u   = any(abs(tb_u)>1e-8)
     ltb_v   = any(abs(tb_v)>1e-8)
     ltb_w   = any(abs(tb_w)>1e-8)
@@ -729,7 +809,7 @@ contains
     implicit none
 
     integer k,t
-    real :: dtm,dtp,currtnudge, qttnudge,qtthres
+    real :: dtm,dtp,currtnudge, qttnudge,qtthres, zfac, zfacu
 
     if (.not.(ltestbed .and. ltb_nudge)) return
 
@@ -749,20 +829,33 @@ contains
     qtthres = 1e-6
     do k=1,kmax
     
-     if ( zf(k).gt. tb_zminnudge) then  ! tb_zminnudge #tb START
+      zfac = 0. 
+      if ( zf(k).gt. tb_zminnudge) then
+        ! set factor in nudging intensity: linear increase from 0 to 1 in heightrange  tb_zmidnudge > z > tb_zminnudge
+        zfac = zf(k) - tb_zminnudge
+        if (tb_zmidnudge.gt.tb_zminnudge) then
+          zfac = max( 0., min( 1., zfac / (tb_zmidnudge - tb_zminnudge) ) )
+        else
+          zfac = 0.5 + sign( 0.5, zfac )
+        endif
+        !write(0,*) 'modtestbed: ', k, zf(k), tb_zminnudge, tb_zmidnudge, zfac
+      endif
+
+      zfacu = zfac
+      !zfacu = 1.
      
       currtnudge = max(rdt,tnudge(t,k)*dtp+tnudge(t+1,k)*dtm)
 
-      if (ltb_u)   up(2:i1,2:j1,k) = up(2:i1,2:j1,k)     - &
+      if (ltb_u)   up(2:i1,2:j1,k) = up(2:i1,2:j1,k)   - zfacu * &
           ( u0av(k)   - (tb_u(t,k)  *dtp + tb_u(t+1,k)  *dtm) ) / currtnudge
 
-      if (ltb_v)   vp(2:i1,2:j1,k) = vp(2:i1,2:j1,k)     - &
+      if (ltb_v)   vp(2:i1,2:j1,k) = vp(2:i1,2:j1,k)   - zfacu * &
           ( v0av(k)   - (tb_v(t,k)  *dtp + tb_v(t+1,k)  *dtm) ) / currtnudge
 
-      if (ltb_w)   wp(2:i1,2:j1,k) = wp(2:i1,2:j1,k)     - &
+      if (ltb_w)   wp(2:i1,2:j1,k) = wp(2:i1,2:j1,k)    - zfac * &
           (           - (tb_w(t,k)  *dtp + tb_w(t+1,k)  *dtm) ) / currtnudge
 
-      if (ltb_thl) thlp(2:i1,2:j1,k) = thlp(2:i1,2:j1,k) - &
+      if (ltb_thl) thlp(2:i1,2:j1,k) = thlp(2:i1,2:j1,k) -zfac * &
           ( thl0av(k) - (tb_thl(t,k)*dtp + tb_thl(t+1,k)*dtm) ) / currtnudge
 
       if (ltb_qt)  then
@@ -774,7 +867,7 @@ contains
           qtp(2:i1,2:j1,k) = qtp(2:i1,2:j1,k)   - &
             ( qt0av(k)  - (tb_qt(t,k) *dtp + tb_qt(t+1,k) *dtm) ) / qttnudge
       end if
-     endif ! tb_zminnudge #tb END
+     !endif ! tb_zminnudge #tb END
     end do
     
     ! if(ltb_sv.and. ltb_nudge) then 
@@ -816,7 +909,8 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   subroutine exittestbed
-  if (allocated(tb_time)) then
+   use modglobal, only: nsv
+   if (allocated(tb_time)) then
     deallocate(  tnudge       &
                 ,tb_u         &
                 ,tb_v         &
@@ -848,11 +942,14 @@ contains
                 ,tbrad_qv     &
                 ,tbrad_ql     &
                 ,tbrad_o3     &
-                ,tb_sv        &
+               )
+    if(nsv>0) then         
+      deallocate(tb_sv        &
                 ,tb_svadv     &
                 ,tb_svs       &
-               )    
-  end if
+               )
+    end if
+   end if
   end subroutine exittestbed
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

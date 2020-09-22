@@ -46,6 +46,7 @@
             
   ! flags for different parts of microphysical processes 
   logical :: l_sb_lim_aggr     = .true.  &  !< whether to start with snow aggregation only after specific size
+            ,l_snow            = .true.  &  !< whether to use aggregation of ice to snow 
             ,l_sb_stickyice    = .false. &  !< whether the ice is sticky or the stickyness limited as in Seifert
             ,l_sb_clnuc_first  = .true.  &  !< whether to first correct for nucleated cloud water, then other
             ,l_sb_conv_par     = .true.  &  !< whether to use partial conversion to graupel

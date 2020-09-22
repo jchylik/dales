@@ -87,7 +87,9 @@ contains
       ! Jarvis-Steward related variables
       rsminav, rssoilminav, LAIav, gDav, &
       ! Prescribed values for isurf 2, 3, 4
-      z0, thls, ps, ustin, wtsurf, wqsurf, wsvsurf, &
+      z0, thls, ps, ustin, wtsurf, wqsurf, wsvsurf,     &
+      ! ice surface
+      l_surfice,                                        &
       ! Heterogeneous variables
       lhetero, xpatches, ypatches, land_use, loldtable, &
       ! AGS variables
@@ -146,6 +148,7 @@ contains
     call MPI_BCAST(ps         ,1,MY_REAL   ,0,comm3d,mpierr)
     call MPI_BCAST(thls       ,1,MY_REAL   ,0,comm3d,mpierr)
 
+    call MPI_BCAST(l_surfice                  ,            1, MPI_LOGICAL, 0, comm3d, mpierr)
     call MPI_BCAST(lhetero                    ,            1, MPI_LOGICAL, 0, comm3d, mpierr)
     call MPI_BCAST(loldtable                  ,            1, MPI_LOGICAL, 0, comm3d, mpierr)
     call MPI_BCAST(lrsAgs                     ,            1, MPI_LOGICAL, 0, comm3d, mpierr)
@@ -813,7 +816,11 @@ contains
         end do
       end do
 
-      call qtsurf
+    if(l_surfice) then
+        call qicesurf
+    else
+        call qtsurf
+    end if
 
     end if
 
@@ -1100,6 +1107,92 @@ contains
 
   end subroutine qtsurf
 
+
+!> Calculate the surface humidity assuming saturation with respect to ice
+  subroutine qicesurf
+    use modglobal,   only : tmelt,bt,at,rd,rv,cp,es0,pref0,ijtot,i1,j1    &
+                            ,esatitab,ttab 
+    use modfields,   only : qt0
+    !use modsurfdata, only : rs, ra
+    use modmpi,      only : my_real,mpierr,comm3d,mpi_sum,mpi_integer
+
+    implicit none
+    real       :: exner, tsurf, qsatsurf, surfwet, es, qtsl
+    integer    :: i,j, patchx, patchy
+    integer    :: Npatch(xpatches,ypatches), SNpatch(xpatches,ypatches)
+    integer    :: tlonr
+    real       :: lqts_patch(xpatches,ypatches)
+    real       :: esi1s, tlo, thi
+
+    patchx = 0
+    patchy = 0
+
+    if(isurf <= 2) then
+      qtsl = 0.
+      do j = 2, j1
+        do i = 2, i1
+          exner      = (ps / pref0)**(rd/cp)
+          tsurf      = tskin(i,j) * exner
+          ! es         = es0 * exp(at*(tsurf-tmelt) / (tsurf-bt))
+          ! instead use tabulated values as in modthermodynamics
+          tlonr=int((tsurf-150.)*5.) ! tlonr=int((ttry-150.)*5.)
+          tlo=ttab(tlonr)
+          thi=ttab(tlonr+1)
+          esi1s =(thi-tsurf)*5.*esatitab(tlonr)+(tsurf-tlo)*5.*esatitab(tlonr+1) ! esi1=(thi-Tnr)*5.*esatitab(tlonr)+(Tnr-tlo)*5.*esatitab(thinr)
+          qsatsurf   = rd / rv * esi1s / ps
+          surfwet    = ra(i,j) / (ra(i,j) + rs(i,j))
+          qskin(i,j) = surfwet * qsatsurf + (1. - surfwet) * qt0(i,j,1)
+          qtsl       = qtsl + qskin(i,j)
+        end do
+      end do
+
+      call MPI_ALLREDUCE(qtsl, qts, 1,  MY_REAL, &
+                         MPI_SUM, comm3d,mpierr)
+      qts  = qts / ijtot
+      thvs = thls * (1. + (rv/rd - 1.) * qts)
+
+      if (lhetero) then
+        lqts_patch = 0.
+        Npatch     = 0
+        do j = 2, j1
+          do i = 2, i1
+            patchx     = patchxnr(i)
+            patchy     = patchynr(j)
+            exner      = (ps_patch(patchx,patchy) / pref0)**(rd/cp)
+            tsurf      = tskin(i,j) * exner
+            ! esi1s         = es0 * exp(at*(tsurf-tmelt) / (tsurf-bt))
+            ! instead use tabulated values as in modthermodynamics
+            tlonr=int((tsurf-150.)*5.) ! tlonr=int((ttry-150.)*5.)
+            tlo=ttab(tlonr)
+            thi=ttab(tlonr+1)
+            ! #tb_heterosurf : here add land switch type
+            ! if (land_use(i,j).eq. type_ice) then
+            esi1s =(thi-tsurf)*5.*esatitab(tlonr)+(tsurf-tlo)*5.*esatitab(tlonr+1)
+            ! : else
+            ! :  esi1s         = es0 * exp(at*(tsurf-tmelt) / (tsurf-bt))
+            ! #tb_heterosurf 
+            qsatsurf   = rd / rv * esi1s / ps_patch(patchx,patchy)
+            surfwet    = ra(i,j) / (ra(i,j) + rs(i,j))
+            qskin(i,j) = surfwet * qsatsurf + (1. - surfwet) * qt0(i,j,1)
+
+            lqts_patch(patchx,patchy) = lqts_patch(patchx,patchy) + qskin(i,j)
+            Npatch(patchx,patchy)     = Npatch(patchx,patchy)     + 1
+          enddo
+        enddo
+        call MPI_ALLREDUCE(lqts_patch(1:xpatches,1:ypatches), qts_patch(1:xpatches,1:ypatches),&
+        xpatches*ypatches,     MY_REAL,MPI_SUM, comm3d,mpierr)
+        call MPI_ALLREDUCE(Npatch(1:xpatches,1:ypatches)    , SNpatch(1:xpatches,1:ypatches)  ,&
+        xpatches*ypatches,MPI_INTEGER ,MPI_SUM, comm3d,mpierr)
+        qts_patch = qts_patch / SNpatch
+        thvs_patch = thls_patch * (1. + (rv/rd - 1.) * qts_patch)
+      endif
+    end if
+
+    return
+
+  end subroutine qicesurf
+  
+  
 !> Calculates the Obukhov length iteratively.
   subroutine getobl
     use modglobal, only : zf, rv, rd, grav, i1, j1, i2, j2, cu, cv
@@ -2207,7 +2300,11 @@ contains
       thls_patch = thls_patch / SNpatch
     endif
 
-    call qtsurf
+    if(l_surfice) then
+        call qicesurf
+    else
+        call qtsurf
+    end if
 
   end subroutine do_lsm
 

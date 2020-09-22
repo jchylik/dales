@@ -74,7 +74,7 @@ contains
    implicit none
 
     integer :: ierr
-
+  
     namelist/NAMLSMCROSSSECTION/ &
     lcross, dtav, crossheight, crossplane
 
@@ -166,6 +166,7 @@ contains
   subroutine lsmcrosssection
     use modglobal, only : rk3step,timee,dt_lim
     use modstat_nc, only : writestat_nc
+    use modsurfdata, only : isurf  !#cgn
     implicit none
 
 
@@ -177,9 +178,13 @@ contains
     end if
     tnext = tnext+idtav
     dt_lim = minval((/dt_lim,tnext-timee/))
-   call wrtvert
-   call wrthorz
-   call wrtsurf
+    if (isurf==1) then ! #cgn - only if the soil model is used
+     call wrtvert
+     call wrthorz
+     call wrtsurf
+    else !#cgn - for other setups
+     call wrtsurf_basic
+    endif !#cgn
 
   end subroutine lsmcrosssection
 
@@ -338,6 +343,98 @@ contains
 
 
   end subroutine wrtsurf
+
+  !> Do the xy lsmcrosssections and dump them to file
+  subroutine wrtsurf_basic
+    use modglobal, only : imax,jmax,i1,j1,cexpnr,ifoutput,rtimee
+    use modsurfdata, only : Qnet, H, LE, G0, rs, ra, tskin, tendskin, &
+                           cliq,rsveg,rssoil,Wl
+    use modstat_nc, only : lnetcdf, writestat_nc
+    implicit none
+
+
+    ! LOCAL
+    integer i,j
+    real, allocatable :: vars(:,:,:)
+
+
+
+
+    ! open(ifoutput,file='movh_qnet.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((qnet(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_h.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((h(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_le.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((le(i,j),i=2,i1),j=2,j1)
+    !  close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_g0.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((g0(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_rs.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((rs(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_ra.'//cexpnr,position='append',action='write')
+    !write(ifoutput,'(es12.5)') ((ra(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+
+    open(ifoutput,file='movh_tskin.'//cexpnr,position='append',action='write')
+    write(ifoutput,'(es12.5)') ((tskin(i,j),i=2,i1),j=2,j1)
+    close(ifoutput)
+
+    !
+    !open(ifoutput,file='movh_tendskin.'//cexpnr,position='append',action='write')
+    !write(ifoutput,'(es12.5)') ((tendskin(i,j),i=2,i1),j=2,j1)
+    !close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_cliq.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((cliq(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_rsveg.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((rsveg(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_rssoil.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((rssoil(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+    !
+    ! open(ifoutput,file='movh_wl.'//cexpnr,position='append',action='write')
+    ! write(ifoutput,'(es12.5)') ((wl(i,j),i=2,i1),j=2,j1)
+    ! close(ifoutput)
+
+
+    if (lnetcdf) then
+        allocate(vars(1:imax,1:jmax,nvar3))
+        vars        = 0.0
+        ! vars(:,:,1) = 0.0 ! qnet(2:i1,2:j1)
+        ! vars(:,:,2) = 0.0 ! h(2:i1,2:j1)
+        ! vars(:,:,3) = 0.0 ! le(2:i1,2:j1)
+        ! vars(:,:,4) = 0.0 ! g0(2:i1,2:j1)
+        vars(:,:,5) = tskin(2:i1,2:j1)
+        ! vars(:,:,6) = 0.0 ! tendskin(2:i1,2:j1)
+        ! vars(:,:,7) = 0.0 ! rs(2:i1,2:j1)
+        ! vars(:,:,8) = 0.0 ! ra(2:i1,2:j1)
+        ! vars(:,:,9) = 0.0 ! cliq(2:i1,2:j1)
+        ! vars(:,:,10) =0.0 ! Wl(2:i1,2:j1)
+        ! vars(:,:,11) = 0.0 !rssoil(2:i1,2:j1)
+        ! vars(:,:,12) = 0.0 ! rsveg(2:i1,2:j1)
+        call writestat_nc(ncid3,1,tncname3,(/rtimee/),nrec3,.true.)
+        call writestat_nc(ncid3,nvar3,ncname3(1:nvar3,:),vars,nrec3,imax,jmax)
+        deallocate(vars)
+    end if
+
+
+  end subroutine wrtsurf_basic
+
+
 !> Clean up when leaving the run
   subroutine exitlsmcrosssection
     use modstat_nc, only : exitstat_nc,lnetcdf
