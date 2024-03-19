@@ -1,0 +1,151 @@
+&RUN
+  iexpnr      =  001
+  lwarmstart  =  .false.                      ! .true. ! for restarts
+  startfile   =  'initd003h00mx000y000.001'   ! adjust filename based on restart time
+  runtime     =  72000                        ! expected run time               
+  trestart    =  3600                         ! frequent restarts     
+  ladaptive   =  .true.                       ! adaptive timestep
+  irandom     =  43                           ! Initial perturbations for LES: 
+  krand       =  10                           !  * below 250 m              
+  randthl     =   0.1                         !  * 0.1 K initial randomization
+  randqt      =   0.0                         !  * no initial initial randomization in qt 
+  dtav_glob   =  60                           ! global interval for sampling
+  timeav_glob =  600                          ! time averaged statistics every 10 minutes
+  nsv         =  2                            ! number of scalars
+/
+
+&DOMAIN
+  itot       =  256          ! 8    ! test
+  jtot       =  256          ! 8    ! test
+  kmax       =  161          ! modified grid for DALES | 160  ! COMBLE grid
+  xsize      =  25600        ! 800  ! test
+  ysize      =  25600        ! 800  ! test
+  xlat       =  78.41        ! < rewritten by values loaded from scm_in
+  xlon       =   8.47        ! < rewritten by values loaded from scm_in
+  xday       =  72           ! day 12 March
+  xtime      =  0.0          ! starts at 22:00
+/
+
+&PHYSICS
+  ps         =  100805.48    ! < rewritten by values loaded from scm_in
+  thls       =  278.61       ! < rewritten by values loaded from scm_in
+  lmoist     =  .true.       ! surface is always water 
+  iradiation =  1            ! full radiation scheme
+  rad_ls     =  .false.      ! no prescribed radiative forcing
+  lcoriol    =  .true.       ! coriolis force
+  lpressgrad =  .true.       ! enable pressure gradients
+  lmomsubs   =  .false.      ! subsidence not applied on momentum
+  ltimedep   =  .true.       ! time dependet forcings 
+  ltimedepsv =  .false.      ! scalars NOT time dependent  
+/
+
+&NAMRADIATION
+  lcnstzenith   = .true.     ! constant zenith angle
+  cnstzenith    =  0.0       ! no SW radiation 
+  emissurf      =  1.0       ! surface emissitivity 1  (from the meeting)
+  l_radfullice  = .true.     ! full radiion scheme
+  l_nc_const    = .true.     ! ? constant cloud droplet number for radiation
+  l_nci_const   = .false.    ! ? constant ice crystal number
+  l_pre_const   = .false.    ! ? constant droplet rdius size
+  l_pde_const   = .false.    ! ? constant ice effective diameter size
+/
+
+
+&NAMSURFACE
+  isurf      =  2            ! prescribed surface temperature 
+  lmostlocal   = .false.     ! ? local determination  of M-O length 
+  lsmoothflux  = .false.     ! ? smoothing of calculated fluxes
+  z0mav        = 0.0008      ! < rewritten by values loaded from scm_in
+  z0hav        = 0.00085     ! < rewritten by values loaded from scm_in
+  albedoav     = 0.06        ! < rewritten by values loaded from scm_in
+  l_surficefrac =  .false.   ! over open water only                
+  f_sal        =  1.0        ! for simplicity
+/
+
+&DYNAMICS
+  llsadv       =  .false.    ! ? large-scale forcing
+  cu           =  0.         ! ? galilean transformation velocity
+  cv           =  0.         ! ? galilean transformation velocity
+  iadv_mom     =  2          ! ? which advection scheme for: * momentum
+  iadv_tke     =  2          ! ?                             * vertical TKE
+  iadv_thl     =  2          ! ?                             * theta_l
+  iadv_qt      =  2          ! ?                             * total humidity
+  iadv_sv      =  2          ! ?                             * scalars
+/
+
+&NAMTESTBED
+  ltestbed      = .true.     ! load through testbed scm_in.nc file
+  ltb_latestart = .false.    ! not starting at 0 UTC 
+  ltb_nudge     = .false.    ! nudging turned off
+  ltb_iceinit   = .false.    ! ice initialization OFF
+  ltb_iadv      = .false.    ! ice advection OFF
+/
+
+&NAMMICROPHYSICS
+  imicro        = 2          !  warm microphysics only
+  Nc_0          =  20.e6     ! fixed cloud droplet number  
+/
+
+&NAMBULKMICROSTAT
+  lmicrostat    = .true.      ! microphysics statistics
+  timeav        = 600         ! time averaging 10 minutes
+  dtav          = 60          ! sampling 
+/
+
+&NAMCHECKSIM
+  tcheck     = 0              ! timesteps between checking courant number
+/
+
+&NAMSAMPLING
+  lsampcl     = .true.        ! conditional samplings
+  lsampco     = .true.
+  lsampup     = .true.
+  lsamptend   = .true.
+  dtav        = 60
+  timeav      = 600
+/
+
+&NAMTIMESTAT
+  ltimestat   = .true.        ! time statistics 
+  dtav        = 60            ! ? hwo often:  every 60 s
+/
+
+&NAMCROSSSECTION
+  lcross      = .true.        ! cross sections
+  dtav        = 600           ! every 10 minutes
+/
+
+&NAMGENSTAT
+ lstat        = .true.
+ dtav         = 60
+ timeav       = 600            ! avergaing 10 minutes
+/
+
+&NAMRADSTAT
+  lstat       = .true.
+  dtav        = 60
+  timeav      = 600           ! averaging 10 minutes
+/
+
+&NAMNETCDFSTATS
+  lsync       = .true.        ! appending netcdf file after restart 
+/
+
+&NAMFIELDDUMP
+  lfielddump  = .true.        ! fielddump 3D files
+  dtav        = 3600          ! every 1 hour
+  lbinary     = .false.       ! ? also make binary
+  khigh       = 161           ! dump fields up to whcih vertical layer
+/
+
+&NAMSTATTEND
+  dtav        = 60
+  timeav      = 600           ! sampling tendencies
+  ltend       = .true.
+/
+&NAMCLOUDFIELD
+  dtav        =  600           
+  lcloudfield = .false.       ! ? cloud field statistics ? 
+  laddinfo    = .true.        ! ? writing q_l and w values ?
+/
+
