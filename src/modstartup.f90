@@ -419,8 +419,9 @@ contains
     use moduser,           only : initsurf_user
 
     use modtestbed,        only : ltestbed,tb_ps,tb_thl,tb_qt,tb_u,tb_v,tb_w,tb_ug,tb_vg,&
-                                  tb_dqtdxls,tb_dqtdyls,tb_qtadv,tb_thladv
-
+                                  tb_wts,tb_wqs,tb_thls,&
+                                  tb_dqtdxls,tb_dqtdyls,tb_uadv,tb_vadv,tb_qtadv,tb_thladv, &
+                                  ltb_sv,tb_sv,tb_seaicefrct,tb_thls_ocean,tb_thls_seaice
     integer i,j,k,n,ierr
     logical negval !switch to allow or not negative values in randomnization
 
@@ -567,6 +568,22 @@ contains
       svprof = 0.
       if(myid==0)then
         if (nsv>0) then
+         if(ltestbed) then  ! #tb START
+            write(*,*) 'readinitfiles: testbed mode: scalar fields from scm_in.nc'
+            do k=1,kmax
+             do n=1,nsv
+               svprof(k,n) = tb_sv(1,k,n)
+             end do
+            end do
+            write (6,*) 'height   sv(1) --------- sv(nsv) '
+            do k=kmax,1,-1
+             write (6,*) &
+                height (k), &
+                (svprof (k,n),n=1,nsv)
+            end do
+
+         else ! #tb END ltestbed==0
+
           open (ifinput,file='scalar.inp.'//cexpnr,status='old',iostat=ierr)
           if (ierr /= 0) then
              write(6,*) 'Cannot open the file ', 'scalar.inp.'//cexpnr
@@ -586,7 +603,7 @@ contains
                   height (k), &
                 (svprof (k,n),n=1,nsv)
           end do
-
+         endif ! #tb
         end if
       end if ! end if myid==0
 
