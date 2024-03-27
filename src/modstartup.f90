@@ -79,6 +79,7 @@ contains
     use modmpi,            only : initmpi,commwrld,myid,nprocx,nprocy,mpierr &
                                 , D_MPI_BCAST
     use modchem,           only : initchem
+    !use modspraying,       only : initspraying !cstep 
     use modversion,        only : git_version
     
     implicit none
@@ -263,6 +264,8 @@ contains
     call initfields
     call inittestbed    !reads initial profiles from scm_in.nc, to be used in readinitfiles
 
+    !call initspraying   !cstep
+
     call initboundary
     call initthermodynamics
     call initradiation
@@ -402,11 +405,13 @@ contains
     real, allocatable :: height(:), th0av(:)
     real(field_r), allocatable :: thv0(:,:,:)
 
+
     character(80) chmess
 
     allocate (height(k1))
     allocate (th0av(k1))
     allocate(thv0(2-ih:i1+ih,2-jh:j1+jh,k1))
+
 
 
     if (.not. lwarmstart) then

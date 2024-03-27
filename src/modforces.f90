@@ -225,11 +225,15 @@ contains
 !                                                                 |
 !-----------------------------------------------------------------|
 
-  use modglobal, only : i1,j1,kmax,dzh,nsv,lmomsubs
+  use modglobal, only : i1,j1,kmax,dzh,nsv,lmomsubs,&
+                        rlv,cp
   use modfields, only : up,vp,thlp,qtp,svp,&
                         whls, u0av,v0av,thl0,qt0,sv0,u0,v0,&
                         dudxls,dudyls,dvdxls,dvdyls,dthldxls,dthldyls,dqtdxls,dqtdyls, &
-                        dqtdtls, dthldtls, dudtls, dvdtls
+                        dqtdtls, dthldtls, dudtls, dvdtls,&
+                        exnf
+  use modsprayingdata, only : lapply_spraying, i_loc_spray,j_loc_spray,k_loc_spray,&
+                              dqldt_spraying,dsvdt_spraying,isv_salt
   implicit none
 
   integer i,j,k,n,kp,km
@@ -307,6 +311,12 @@ contains
       enddo
     enddo
   enddo
+
+  if (lapply_spraying) then
+     qtp(i_loc_spray,j_loc_spray,k_loc_spray)  = qtp(i_loc_spray,j_loc_spray,k_loc_spray) + dqldt_spraying
+     thlp(i_loc_spray,j_loc_spray,k_loc_spray) = thlp(i_loc_spray,j_loc_spray,k_loc_spray) - (rlv/(cp*exnf(k_loc_spray)))*dqldt_spraying
+     svp(i_loc_spray,j_loc_spray,k_loc_spray,isv_salt)  = svp(i_loc_spray,j_loc_spray,k_loc_spray,isv_salt) + dsvdt_spraying
+  endif
 
   return
   end subroutine lstend

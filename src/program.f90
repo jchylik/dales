@@ -152,6 +152,8 @@ program DALES
   use modcanopy,       only : initcanopy, canopy, exitcanopy
   use modadvection,    only : advection
 
+  use modspraying,     only : initspraying
+
 
   implicit none
 
@@ -193,6 +195,8 @@ program DALES
 
   !call initspectra2
   call initcape
+
+  call initspraying
 
 
 !------------------------------------------------------
