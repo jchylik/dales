@@ -153,6 +153,8 @@ program DALES
   use modadvection,    only : advection
 
   use modspraying,     only : initspraying
+ !cstep  the following modules are needed if the concurrent precursor method is applied
+  use modnudgeboundary, only : initnudgeboundary, nudgeboundary, exitnudgeboundary, lnudgeboundary !PVD
 
 
   implicit none
@@ -197,6 +199,7 @@ program DALES
   call initcape
 
   call initspraying
+  call initnudgeboundary !cstep  IBM with concurrent precursor
 
 
 !------------------------------------------------------
@@ -252,6 +255,8 @@ program DALES
 !    call tiltedgravity
 
     call samptend(tend_addon)
+    if (lnudgeboundary ) call nudgeboundary
+
 
 !-----------------------------------------------------------------------
 !   3.5  PRESSURE FLUCTUATIONS, TIME INTEGRATION AND BOUNDARY CONDITIONS
@@ -333,6 +338,7 @@ program DALES
   call exitheterostats
   call exitcanopy
   call exittimestat
+  call exitnudgeboundary  !cstep
   call exitmodules
 
 end program DALES

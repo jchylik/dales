@@ -636,6 +636,7 @@ contains
     else !if lwarmstart
 
       call readrestartfiles
+      call baseprofs
       um   = u0
       vm   = v0
       wm   = w0

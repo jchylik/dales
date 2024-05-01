@@ -7,13 +7,16 @@ module modspraying
    use modsprayingdata, only: i_glob_spray,j_glob_spray,k_glob_spray,&
                               i_loc_spray,j_loc_spray,k_loc_spray,&
                               water_spray_rate,salt_spray_rate,&
-                              lwater_spraying,lsalt_spraying,salinity
+                              lwater_spraying,lsalt_spraying,salinity,&
+                              isv_salt
 
 contains
   subroutine initspraying
   use modglobal,    only : i1,j1,imax,jmax,kmax,ifnamopt,fname_options,nsv
   use modmpi,       only : myid,myidx,myidy,comm3d, mpierr, d_mpi_bcast
   use modmicrodata, only: imicro
+  use modfields   , only: lsv_nudge_at_boundary
+  use modnudgeboundary, only : lnudgeboundary
 
   integer i,j,k,iglob,jglob,ierr
 
@@ -58,6 +61,9 @@ contains
          print *, 'increase number of passive scalar fields'
          stop 'ERROR: not enough passive scalar fields'
      endif
+     if (lnudgeboundary) then
+        lsv_nudge_at_boundary(isv_salt) = .true.
+     endif
   endif
 
   !determine local position of spraying from global position
@@ -86,13 +92,15 @@ contains
  
   if (myid==0) then 
      write(6,*) 'Spraying data used: '
-     write(6,*) 'lwater_spraying  ',lwater_spraying
-     write(6,*) 'lsalt_spraying   ',lsalt_spraying
-     write(6,*) 'i_glob_spray     ',i_glob_spray
-     write(6,*) 'j_glob_spray     ',j_glob_spray
-     write(6,*) 'k_glob_spray     ',k_glob_spray
-     write(6,*) 'water_spray_rate ',water_spray_rate
-     write(6,*) 'salt_spray_rate  ',salt_spray_rate
+     write(6,*) 'lwater_spraying     ',lwater_spraying
+     write(6,*) 'lsalt_spraying      ',lsalt_spraying
+     write(6,*) 'i_glob_spray        ',i_glob_spray
+     write(6,*) 'j_glob_spray        ',j_glob_spray
+     write(6,*) 'k_glob_spray        ',k_glob_spray
+     write(6,*) 'water_spray_rate    ',water_spray_rate
+     write(6,*) 'salt_spray_rate     ',salt_spray_rate
+     write(6,*) 'salt scalar number  ',isv_salt
+     write(6,*) 'lsv_nudge_at_boundary',lsv_nudge_at_boundary(:)
      write(6,*)
   endif
 

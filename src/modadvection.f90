@@ -42,6 +42,9 @@ subroutine advection
   use advec_hybrid_f, only : advecc_hybrid_f
   use advec_kappa,    only : advecc_kappa
   use advec_upw,      only : advecc_upw
+use modsprayingdata, only : lwater_spraying, lsalt_spraying,i_loc_spray,j_loc_spray,k_loc_spray,&
+                              water_spray_rate,salt_spray_rate,&
+                              dqldt_spraying,dsvdt_spraying,isv_salt, salinity
   implicit none
   integer :: n
 
@@ -195,7 +198,9 @@ subroutine advection
     case(iadv_62)
       call advecc_62(sv0(:,:,:,n),svp(:,:,:,n))
     case(iadv_kappa)
+      !write(6,*) 'svp before kap' ,svp(i_loc_spray:i_loc_spray+1,j_loc_spray,k_loc_spray,isv_salt)
       call advecc_kappa(sv0(:,:,:,n),svp(:,:,:,n))
+      !write(6,*) 'svp after kap' ,svp(i_loc_spray:i_loc_spray+1,j_loc_spray,k_loc_spray,isv_salt)
     case(iadv_upw)
       if (.not. leq) stop "advec_upw does not support a non-uniform vertical grid."
       call advecc_upw(sv0(:,:,:,n),svp(:,:,:,n))
