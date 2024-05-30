@@ -198,8 +198,8 @@ program DALES
   !call initspectra2
   call initcape
 
-  call initspraying
   call initnudgeboundary !cstep  IBM with concurrent precursor
+  call initspraying
 
 
 !------------------------------------------------------
