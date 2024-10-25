@@ -275,7 +275,7 @@ contains
     integer :: advarr(4)
     real phi, colat, silat, omega, omega_gs
     real :: ilratio
-    integer :: k, n, m, ierr
+    integer :: k, m, ierr
     integer :: ncid, height_id
     character(80) chmess
 

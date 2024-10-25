@@ -139,8 +139,7 @@ contains
 
   subroutine wrtdrydepfields
     use moddrydeposition, only : depfield
-    use modglobal, only : i1, j1, nsv, imax, jmax, ifoutput, iexpnr, &
-                          rtimee
+    use modglobal, only : i1, j1, nsv, imax, jmax, rtimee
     use modfields, only : rhof
     use modstat_nc, only : lnetcdf, writestat_nc
     use moddrydeposition, only : ndeptracers
@@ -148,8 +147,7 @@ contains
     implicit none
 
     real, allocatable :: depfield_massflux(:, :, :)
-    character(80) :: txtfname
-    integer :: isv, idt, i, j
+    integer :: isv, idt
     real    :: MW_air = 28.9644
     
     allocate(depfield_massflux(1:imax, 1:jmax, ndeptracers))

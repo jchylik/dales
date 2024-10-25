@@ -39,7 +39,7 @@ module moddrydeposition
   logical, dimension(100) :: ldeptracers = .false. !< List of switches determining which of the tracers to deposit
   integer  :: ndeptracers = 0  !< Number of tracers that deposits
   integer  :: iname 
-  real :: nh3_avg = -1, so2_avg = -1	!GT added to not have the variables needed for the calculations of ccomp hardcoded
+  real :: nh3_avg = -1, so2_avg = -1    !GT added to not have the variables needed for the calculations of ccomp hardcoded
 
   private :: Rc, Rb, vd
 
@@ -72,7 +72,7 @@ subroutine initdrydep
   ! init drydep fields
 
   use modglobal, only : i2, j2, nsv, ifnamopt, fname_options, &
-                        checknamelisterror, imax, jmax
+                        checknamelisterror
   use modmpi,    only : myid, comm3d, d_mpi_bcast
 
   implicit none
@@ -85,7 +85,7 @@ subroutine initdrydep
   ! ---------------------------------------------------------------------!
 
   ! --- Read & broadcast namelist DEPOSITION -----------------------------------
-  namelist/NAMDEPOSITION/ ldrydep, nh3_avg, so2_avg	!GT added nh3_avg and so2_avg
+  namelist/NAMDEPOSITION/ ldrydep, nh3_avg, so2_avg     !GT added nh3_avg and so2_avg
       
 
   if (myid == 0) then
@@ -97,8 +97,8 @@ subroutine initdrydep
   endif
 
   call d_mpi_bcast(ldrydep,              1, 0, comm3d, ierr)
-  call d_mpi_bcast(nh3_avg,		 1, 0, comm3d, ierr)	!GT added
-  call d_mpi_bcast(so2_avg,		 1, 0, comm3d, ierr)	!GT added
+  call d_mpi_bcast(nh3_avg,              1, 0, comm3d, ierr)    !GT added
+  call d_mpi_bcast(so2_avg,              1, 0, comm3d, ierr)    !GT added
   
   do isv = 1,nsv
     if (.not. tracer_prop(isv)%ldep) cycle
@@ -172,20 +172,20 @@ end subroutine drydep
 !!
 !! @see M.C. van Zanten et al., "Description of the DEPAC module", RIVM report nr. 680180001/2010
 !! @see DryDepos_Gas_DEPAC
-subroutine depac_call(ilu, species, species_idx)		!GT added variable of species_idx for trac_id to allow looping in the calculations of ccomp
+subroutine depac_call(ilu, species, species_idx)                !GT added variable of species_idx for trac_id to allow looping in the calculations of ccomp
   use modlsm, only : tile
   use modglobal, only : i1, j1, xday, xlat, xlon, xtime, rtimee
-  use modfields, only : thl0, exnf, presf, qt0, qsat, sv0             !GT added sv0
+  use modfields, only : thl0, exnf, qt0, qsat, sv0             !GT added sv0
   use le_drydepos_gas_depac, only : DryDepos_Gas_DEPAC
   use modraddata, only : zenith, swd
   use utils, only : to_upper
   implicit none
 
-  integer, intent(in) :: ilu, species_idx		!GT added species_idx
+  integer, intent(in) :: ilu, species_idx               !GT added species_idx
   character(*), intent(in) :: species
   character(len=6) :: depac_species
-  integer :: i, j, nwet = 0, status, depac_ilu, isv      !GT added isv as an integer
-  real :: T, RH, sinphi, lai, sai                            !GT removed ccomp_tot as a real variable
+  integer :: i, j, nwet = 0, status, depac_ilu          !GT added isv as an integer
+  real :: T, RH, sinphi, lai, sai                       !GT removed ccomp_tot as a real variable
 
   ! Temporary values, until something better is available
   ! for now, assuming low NH3/SO2 ratios
@@ -225,7 +225,7 @@ subroutine depac_call(ilu, species, species_idx)		!GT added variable of species_
       call DryDepos_Gas_DEPAC(depac_species, int(xday), xlat, T, &
                               tile(ilu)%ustar(i, j), -swd(i, j, 1), sinphi, RH, lai, sai, nwet, &
                               depac_ilu, iratns, Rc(i, j), Ccomp(i, j), 0.0, 0.0, status, tsea=tile(ilu)%tskin(i, j), c_ave_prev_nh3=nh3_avg, &
-        		      c_ave_prev_so2=so2_avg, catm=sv0(i,j,1,species_idx))         !GT added everything behind tsea, variables needed to calculate comp. if values are set to 0 no comp is calculated
+                              c_ave_prev_so2=so2_avg, catm=sv0(i,j,1,species_idx))         !GT added everything behind tsea, variables needed to calculate comp. if values are set to 0 no comp is calculated
       ! check for missing Rc values, i.e. -9999, and return huge resistance, so virtually no deposition takes place
       if (missing_real(Rc(i, j), -9999.)) then
         Rc(i,j) = 1.e5

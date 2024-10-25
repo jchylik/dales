@@ -73,7 +73,7 @@ contains
     use modlsm,      only : lags
     implicit none
 
-    integer :: ierr, ii
+    integer :: ierr
 
     namelist/NAMLSMCROSSSECTION/ &
     lcross, dtav, crossheight, crossplane

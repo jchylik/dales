@@ -1225,7 +1225,7 @@ contains
 !! - By monitoring a threshold value of some scalar, averaged over a definable number of columns
   subroutine calcblheight
 
-    use modglobal,  only : ih,i1,jh,j1,kmax,k1,cp,rlv,imax,rd,zh,dzh,zf,dzf,rv,ijtot,iadv_sv,iadv_kappa
+    use modglobal,  only : i1,j1,kmax,k1,cp,rlv,imax,rd,zh,dzh,zf,dzf,rv,ijtot,iadv_sv,iadv_kappa
     use modfields,  only : w0,qt0,qt0h,ql0,thl0,thl0h,thv0h,sv0,exnf,whls
     use modsurfdata,only : svs, lhetero, xpatches, ypatches
     use modsurface, only : patchxnr,patchynr
