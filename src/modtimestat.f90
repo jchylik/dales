@@ -119,7 +119,7 @@ contains
     call D_MPI_BCAST(iblh_meth  ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(iblh_var   ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(blh_nsamp  ,1,0,comm3d,mpierr)
-    idtav = dtav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
 
     tnext = idtav+btime
 

@@ -70,12 +70,12 @@ contains
     call D_MPI_BCAST(timeav     ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(dtav       ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(lvarbudget ,1,0,comm3d,mpierr)
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
 
     tnext      = idtav   +btime
     tnextwrite = itimeav +btime
-    nsamples = itimeav/idtav
+    nsamples = int(itimeav / idtav)
     if(.not.(lvarbudget)) return
     dt_lim = min(dt_lim,tnext)
 
@@ -133,7 +133,7 @@ contains
       itimeav    = itimeav_prof
       tnext      = idtav+btime
       tnextwrite = itimeav+btime
-      nsamples   = itimeav/idtav
+      nsamples   = int(itimeav / idtav)
      if (myid==0) then
         call ncinfo(ncname( 1,:),'thl2tendf','Tendency of thl variance','K^2/s','tt')
         call ncinfo(ncname( 2,:),'thl2Pr','Resolved production of thl variance','K^2/s','tt')

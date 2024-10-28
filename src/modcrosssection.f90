@@ -147,7 +147,7 @@ contains
     ! 2  <= crossortho <= i1
     ! belong to this processor
 
-    idtav = dtav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
     tnext   = idtav+btime
     if(.not.(lcross)) return
     dt_lim = min(dt_lim,tnext)

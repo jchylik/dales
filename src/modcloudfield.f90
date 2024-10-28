@@ -63,7 +63,7 @@ contains
     call D_MPI_BCAST(lcloudfield  ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(laddinfo     ,1,0,comm3d,mpierr)
 
-    idtav = dtav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
     tnext      = idtav   +btime
 
     if(.not.(lcloudfield)) return

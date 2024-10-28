@@ -253,7 +253,7 @@ SUBROUTINE initchem
   q_ref    = 5.e-3
   lchmovie = .false.
   dtchmovie= 60
-  idtchmovie = dtchmovie/tres
+  idtchmovie = int(dtchmovie/tres, kind=kind(idtchmovie))
   tnor     = 0
   nchsp    = 0
   lcloudKconst  = .false.
@@ -286,7 +286,7 @@ SUBROUTINE initchem
   lCHon = lchem
 
   if (.not. (lchem)) return
-  itimeav = floor(timeav_glob/tres)
+  itimeav = int(timeav_glob/tres, kind=kind(itimeav))
   tnextwrite = itimeav+btime
   switch = .false.
 

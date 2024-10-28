@@ -132,9 +132,9 @@ contains
     call D_MPI_BCAST(ltntrl      ,1,0,comm3d,ierr)
     call D_MPI_BCAST(lsv       ,100,0,comm3d,ierr)
 
-    idtav = dtav/tres
-    itmin = tmin/tres
-    itmax = tmax/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itmin = int(tmin / tres, kind=kind(itmin))
+    itmax = int(tmax / tres, kind=kind(itmax))
 
     tnext      = idtav   +btime
     if(.not.(lfielddump)) return

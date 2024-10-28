@@ -110,8 +110,8 @@ contains
     longsamplname(3) = 'Quadrant 3: u < 0, w < 0'
     longsamplname(4) = 'Quadrant 4: u > 0, w < 0'
 
-    idtav            = dtav/tres
-    itimeav          = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
     tnext            = idtav   + btime
     tnextwrite       = itimeav + btime
 

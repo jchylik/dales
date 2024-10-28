@@ -87,12 +87,12 @@ subroutine initbulkmicrostat3
     call D_MPI_BCAST(lmicrostat,1,0,comm3d,mpierr)
     call D_MPI_BCAST(dtav      ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(timeav    ,1,0,comm3d,mpierr)
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
 
     tnext      = idtav   + btime
     tnextwrite = itimeav + btime
-    nsamples   = itimeav / idtav
+    nsamples = int(itimeav / idtav)
 
     if (.not. lmicrostat) return
     if (abs(timeav/dtav - nsamples) > 1e-4) then
@@ -113,7 +113,7 @@ subroutine initbulkmicrostat3
       itimeav    = itimeav_prof
       tnext      = idtav   + btime
       tnextwrite = itimeav + btime
-      nsamples   = itimeav / idtav
+      nsamples = int(itimeav / idtav)
       if (myid==0) then
 
         ! statisitcs output

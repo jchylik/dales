@@ -137,8 +137,8 @@ contains
       longsamplname(isamptot) = 'Cloud Updraft '
     end if
 
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
 
     if(isamptot < 2) return
 
@@ -216,7 +216,7 @@ contains
     endif
 
     if (lnetcdf) then
-      nsamples = itimeav/idtav
+      nsamples = int(itimeav / idtav)
      if (myid==0) then
         allocate(ncname(nvar,4,isamptot))
         call nctiminfo(tncname(1,:))

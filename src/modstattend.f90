@@ -79,12 +79,12 @@ subroutine initstattend
     call D_MPI_BCAST(timeav     ,1,0,comm3d,mpierr)
     call D_MPI_BCAST(ltend      ,1,0,comm3d,mpierr)
 
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
 
     tnext      = idtav   +btime
     tnextwrite = itimeav +btime
-    nsamples = itimeav/idtav
+    nsamples = int(itimeav / idtav)
     if(.not.(ltend)) return
     dt_lim = min(dt_lim,tnext)
 
@@ -122,12 +122,12 @@ subroutine initstattend
     endif
 
     if (lnetcdf) then
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
 
     tnext      = idtav   +btime
     tnextwrite = itimeav +btime
-    nsamples = itimeav/idtav
+    nsamples = int(itimeav / idtav)
      if (myid==0) then
         fname(10:12) = cexpnr
         call nctiminfo(tncname(1,:))

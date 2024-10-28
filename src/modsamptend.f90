@@ -107,8 +107,8 @@ subroutine initsamptend
     if(isamptot < 1) return
     if(.not.(lnetcdf)) return !only in netcdf at the moment
 
-    idtav = dtav/tres
-    itimeav = timeav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
+    itimeav = int(timeav / tres, kind=kind(itimeav))
     tnext      = idtav   +btime
     tnextwrite = itimeav +btime
 

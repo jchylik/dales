@@ -85,7 +85,7 @@ contains
     call D_MPI_BCAST(dtav,             1, 0, comm3d, mpierr)
     call D_MPI_BCAST(ldepcrosssection, 1, 0, comm3d, mpierr)
 
-    idtav = dtav/tres
+    idtav = int(dtav / tres, kind=kind(idtav))
     tnext   = idtav+btime
     if(.not. ldepcrosssection) return
     dt_lim = min(dt_lim, tnext)
