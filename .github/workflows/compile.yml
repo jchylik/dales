@@ -55,9 +55,7 @@ jobs:
 
           sudo apt install -y intel-oneapi-mpi-devel intel-oneapi-compiler-fortran
 
-          # localpc_ifort uses mpif90, which breaks, therefore we use CARTESIUS,
-          # which utilizes mpiifort which works
-          echo "SYST=CARTESIUS" >> $GITHUB_ENV 
+          echo "SYST=localpc_ifx" >> $GITHUB_ENV 
 
       - name: Checkout NetCdf-Fortran for Intel
         if: matrix.toolchain == 'intel'
