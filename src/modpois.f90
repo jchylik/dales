@@ -58,8 +58,12 @@ contains
     implicit none
 
     if (solver_id == 0) then
-      ! FFT based solver
-      call fft2dinit(p, Fp, d, xyrt, ps,pe,qs,qe)
+#ifdef USE_FFTW
+      call fftwinit(p, Fp, d, xyrt, ps,pe,qs,qe)
+#else
+      ! If FFTW is not enabled, fall back to the included FFT module
+      call fft2dinit(p, Fp, d, xyrt, ps, pe, qs, qe)
+#endif
     else if (solver_id == 100) then
       ! FFTW based solver
       call fftwinit(p, Fp, d, xyrt, ps,pe,qs,qe)
@@ -101,8 +105,11 @@ contains
     implicit none
 
     if (solver_id == 0) then
-      ! FFT based solver
+#ifdef USE_FFTW
+      call fftwexit(p,Fp,d,xyrt)
+#else
       call fft2dexit(p,Fp,d,xyrt)
+#endif
     else if (solver_id == 100) then
       ! FFTW based solver
       call fftwexit(p,Fp,d,xyrt)
@@ -137,12 +144,20 @@ contains
 
     if (solver_id == 0) then
       ! Forward FFT
+#ifdef USE_FFTW
+      call fftwf(p, Fp)
+#else
       call fft2df(p, Fp)
+#endif
 
       call solmpj
 
       ! Backward FFT
+#ifdef USE_FFTW
+      call fftwb(p, Fp)
+#else
       call fft2db(p, Fp)
+#endif
     else if (solver_id == 100) then
       ! Forward FFT
       call fftwf(p, Fp)
