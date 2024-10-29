@@ -651,12 +651,12 @@ contains
                                            liquidRe (imax,krad1), &
                                            iceRe    (imax,krad1)
       integer :: i,k,ksounding,im
-      real (KIND=kind_rb) :: exners
+      real(KIND=kind_rb) :: exners
       real(KIND=kind_rb) :: layerMass(imax,krad1)
       !real(KIND=kind_rb),dimension(imax,kmax)     :: tabs         ! Absolute temperature
       real(KIND=kind_rb),dimension(imax,jmax)     :: sstxy        ! sea surface temperature
-      real   (SHR_KIND_R4), parameter :: pi = 3.14159265358979
-      real , parameter :: rho_liq = 1000.
+      real, parameter :: pi = 3.14159265358979
+      real, parameter :: rho_liq = 1000.
 
       real :: reff_factor
       real :: ilratio

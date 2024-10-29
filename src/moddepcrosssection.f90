@@ -40,11 +40,10 @@ module moddepcrosssection
   character(80), allocatable, dimension(:, :) :: ncname
   character(80), dimension(1, 4) :: tncname
 
-  ! integer :: nvar = 0  !< Number of variables (for now, equal to nsv, not using svskip) 
+  ! integer :: nvar = 0  !< Number of variables (for now, equal to nsv, not using svskip)
   real :: dtav
   integer(kind=longint) :: idtav, tnext
   logical :: ldepcrosssection = .false.  !< Switch for doing depcrosssection (on/off)
-  logical :: lbinary = .false.  !< Switch for binary output (on/off)
 
 
 contains
@@ -63,9 +62,9 @@ contains
     implicit none
 
     integer :: ierr, isv, idt
-    character(80) :: varname, varlongname 
+    character(80) :: varname, varlongname
 
-    namelist/NAMDEPCROSSSECTION/ ldepcrosssection, lbinary, dtav
+    namelist/NAMDEPCROSSSECTION/ ldepcrosssection, dtav
 
     dtav = dtav_glob
     if (myid==0) then
@@ -81,7 +80,7 @@ contains
       write (6, *) "Ignoring ldepcrosssection, since no dry deposition &
         & and/or land surface model defined"
    end if
-   
+
     call D_MPI_BCAST(dtav,             1, 0, comm3d, mpierr)
     call D_MPI_BCAST(ldepcrosssection, 1, 0, comm3d, mpierr)
 
@@ -149,7 +148,7 @@ contains
     real, allocatable :: depfield_massflux(:, :, :)
     integer :: isv, idt
     real    :: MW_air = 28.9644
-    
+
     allocate(depfield_massflux(1:imax, 1:jmax, ndeptracers))
 
     ! Store the flux as a positive number
@@ -162,7 +161,7 @@ contains
           * rhof(1) * (tracer_prop(isv)%molar_mass/MW_air) * 1e-9  ! from ppb m s-1 to kg/(m2*s)
       idt = idt + 1
     end do
-        
+
     if (lnetcdf) then
       call writestat_nc(ncid, 1, tncname, (/rtimee/), nrec, .true.)
       call writestat_nc(ncid, ndeptracers, ncname, depfield_massflux, nrec, imax, jmax)

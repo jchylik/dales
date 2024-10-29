@@ -512,7 +512,7 @@ contains
     integer, intent(in) :: ibatch
     integer :: jstart, jend
     integer :: i, j, k, icol
-    real(SHR_KIND_R4), parameter :: pi = 3.14159265358979
+    real, parameter :: pi = 3.14159265358979
     real, parameter :: rho_liq = 1000., IWC0=50e-3 ! both in kg/m3
 
     real(kind=kind_rb) :: exners, reff_factor, ilratio, layerMass, qci, qcl, B_function

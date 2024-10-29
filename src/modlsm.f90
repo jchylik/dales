@@ -1110,7 +1110,7 @@ subroutine initlsm
         ! check if nlu_file==nlu-1 ('wet skin' is not in file)
         if (.not. lheterogeneous) then
           write(6,"(A100, i3)") "Homogeneous land use; Note that 1 additional LU type (ws) is added on runtime. &
-                                    Include it in nlu  ", nlu
+                                &Include it in nlu  ", nlu
         end if
 
         allocate(tile(nlu), stat=ierr)

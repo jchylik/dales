@@ -372,13 +372,13 @@ subroutine inputchem
 !c  the scheme to solve the chemical production and loss terms
 !c
 !c***********************************************************************
- use modglobal, only : i1,j1,k1,kmax,cexpnr, ifoutput, nsv
+ use modglobal, only : i1,j1,k1,kmax,cexpnr, ifoutput
  use modmpi,    only : myid
  use utils,     only : to_lower
 
  implicit none
 
-  integer i,j,k,l,react, isv
+  integer i,j,k,l,react
   integer*2 number
   integer react_nr
   real reactconst,coefficient, fact(7)
