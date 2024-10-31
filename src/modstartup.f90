@@ -536,7 +536,7 @@ contains
 #endif
 
     integer i,j,k,n,ierr
-    integer isv, sdx
+    integer isv
     logical negval !switch to allow or not negative values in randomnization
 
     real(field_r), allocatable :: height(:), th0av(:)
@@ -1791,8 +1791,7 @@ contains
     real(field_r),  intent(out) :: dthlrad(:)
     integer,        intent(in)  :: kmax
 
-    integer :: ncid, varid, ierr
-    integer :: itrac
+    integer :: ncid
 
     call nchandle_error(nf90_open(filename, NF90_NOWRITE, ncid))
 
