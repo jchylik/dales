@@ -155,7 +155,11 @@ save
       logical :: lconstexner = .false.  !<  switch to use the initial pressure profile in the exner function
 
       ! Poisson solver: modpois / modhypre
-      integer :: solver_id = 0       ! Identifier for nummerical solver:    0    1   2     3       4
+#ifdef USE_FFTW
+      integer :: solver_id = 100     ! Identifier for nummerical solver:    0    1   2     3       4
+#else
+      integer :: solver_id = 0
+#endif
                                      !                                     FFT  SMG PFMG BiCGSTAB GMRES
       integer :: maxiter = 10000     ! Number of iterations                 .    X   X     X       X
       real(real64):: tolerance = 1E-8! Convergence threshold                .    X   X     X       X
