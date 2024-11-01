@@ -543,7 +543,7 @@ contains
                       (rv*cp*Tnr**2))
             end do
             nitert =max(nitert,niter)
-            niter = 0.0
+            niter = 0
 
             ql(i,j,k) = dim(qt(i,j,k)-qsatur,0.)
 
