@@ -216,7 +216,7 @@ endif(NETCDF_FORTRAN_LIB)
 OPTION(USE_HYPRE "Also build iterative solver (optional, needs HYPRE)" OFF)
 
 ### FFTW based poisson solver (FFTW)
-OPTION(USE_FFTW "Also build FFTW based poisson solver (optional, needs FFTW3)" OFF)
+OPTION(USE_FFTW "Also build FFTW based poisson solver (optional, needs FFTW3)" ON)
 
 ### NVTX
 OPTION(USE_NVTX "Enable GPU profiling" OFF)
