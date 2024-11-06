@@ -73,18 +73,27 @@ contains
     use modglobal,        only: dzf
     use modbulkmicrostat, only: bulkmicrotend
 
-    call calculate_rain_parameters(Nr, qr, rhof, l_mur_cst, mur_cst, qrbase, qrroof, qrmask, xr, Dvr, mur, lbdr)
+    call calculate_rain_parameters(Nr, qr, rhof, l_mur_cst, mur_cst, qrbase, &
+                                   qrroof, qrmask, xr, Dvr, mur, lbdr)
     call bulkmicrotend
-    call autoconversion(ql0, qr, exnf, rhof, qcbase, qcroof, qcmask, thlpmcr, qtpmcr, qrp, Nrp)
+    call autoconversion(ql0, qr, exnf, rhof, qcbase, qcroof, qcmask, thlpmcr, &
+                        qtpmcr, qrp, Nrp)
     call bulkmicrotend
-    call accretion(ql0, qr, Nr, exnf, rhof, qcbase, qcroof, qrbase, qrroof, qcmask, qrmask, Dvr, lbdr, thlpmcr, qtpmcr, qrp, Nrp)
+    call accretion(ql0, qr, Nr, exnf, rhof, qcbase, qcroof, qrbase, qrroof, &
+                   qcmask, qrmask, Dvr, lbdr, thlpmcr, qtpmcr, qrp, Nrp)
     call bulkmicrotend
-    call evaporation(ql0, qt0, svm(:,:,:,iqr), svm(:,:,:,inr), qvsl, tmp0, esl, exnf, rhof, Nr, qrbase, qrroof, qrmask, Dvr, lbdr, mur, xr, qrp, Nrp, delt, qtpmcr, thlpmcr)
+    call evaporation(ql0, qt0, svm(:,:,:,iqr), svm(:,:,:,inr), qvsl, tmp0, &
+                     esl, exnf, rhof, Nr, qrbase, qrroof, qrmask, Dvr, lbdr, &
+                     mur, xr, qrp, Nrp, delt, qtpmcr, thlpmcr)
     call bulkmicrotend
 #ifdef DALES_GPU
-    call sedimentation_rain_gpu(qr, Nr, rhof, dzf, qrbase, qrroof, Dvr, lbdr, mur, delt, xr, l_lognormal, l_mur_cst, mur_cst, qrp, Nrp, qrmask, precep)
+    call sedimentation_rain_gpu(qr, Nr, rhof, dzf, qrbase, qrroof, Dvr, lbdr, &
+                                mur, delt, xr, l_lognormal, l_mur_cst, &
+                                mur_cst, qrp, Nrp, qrmask, precep)
 #else
-    call sedimentation_rain(qr, Nr, rhof, dzf, qrbase, qrroof, qrmask, l_lognormal, l_mur_cst, mur_cst, delt, Dvr, lbdr, mur, xr, qrp, Nrp, precep)
+    call sedimentation_rain(qr, Nr, rhof, dzf, qrbase, qrroof, qrmask, &
+                            l_lognormal, l_mur_cst, mur_cst, delt, Dvr, lbdr, &
+                            mur, xr, qrp, Nrp, precep)
 #endif
     call bulkmicrotend
 
@@ -304,7 +313,7 @@ contains
 
              qrp(i,j,k) = qrp(i,j,k) + ac
              qtpmcr(i,j,k) = qtpmcr(i,j,k) - ac
-             thlpmcr(i,j,k) = thlpmcr(i,j,k) + (rlv/(cp*exnf(k)))*ac
+             thlpmcr(i,j,k) = thlpmcr(i,j,k) + (rlv / (cp * exnf(k))) * ac
           end if
         end do
       end do
@@ -318,12 +327,13 @@ contains
         do i = 2, i1
           if (qrmask(i,j,k)) then
              sc = k_rr *rhof(k)* qr(i,j,k) * Nr(i,j,k)  &
-                  * (1 + kappa_r/lbdr(i,j,k)*pirhow**(1./3.))**(-9.)* (1.225/rhof(k))**0.5
-             if (Dvr(i,j,k) .gt. 0.30E-3) then
-               phi_br = k_br * (Dvr(i,j,k)-D_eq)
-               br = (phi_br + 1.) * sc
+                  * (1 + kappa_r / lbdr(i,j,k) * pirhow**(1.0_field_r/3))**(-9) &
+                  * (1.225_field_r / rhof(k))**0.5_field_r
+             if (Dvr(i,j,k) .gt. 0.30_field_rE-3) then
+               phi_br = k_br * (Dvr(i,j,k) - D_eq)
+               br = (phi_br + 1) * sc
              else
-               br = 0.
+               br = 0
              end if
 
              Nrp(i,j,k) = Nrp(i,j,k) - sc + br
