@@ -123,9 +123,9 @@ contains
 
     integer       :: i, j, k
 
-    call timer_tic('bulkmicro_sb01/calculate_rain_parameters', 1)
-
     if (qrbase > qrroof) return
+
+    call timer_tic('bulkmicro_sb/calculate_rain_parameters', 1)
 
     if (l_mur_cst) then
       !$acc parallel loop collapse(3) default(present)
@@ -167,7 +167,7 @@ contains
       end do
     end do
 
-    call timer_toc('bulkmicro_sb01/calculate_rain_parameters')
+    call timer_toc('bulkmicro_sb/calculate_rain_parameters')
 
   end subroutine calculate_rain_parameters
 
@@ -208,9 +208,9 @@ contains
       nuc,  & !< width parameter of cloud DSD
       k_au    !< Coefficient for autoconversion rate
 
-    call timer_tic('bulkmicro_sb01/autoconversion', 1)
-
     if (qcbase > qcroof) return
+
+    call timer_tic('bulkmicro_sb/autoconversion', 1)
 
     k_au = k_c / (20 * x_s)
 
@@ -238,7 +238,7 @@ contains
       end do
     end do
 
-    call timer_toc('bulkmicro_sb01/autoconversion')
+    call timer_toc('bulkmicro_sb/autoconversion')
 
   end subroutine autoconversion
 
@@ -290,7 +290,7 @@ contains
 
     if (max(qrbase, qcbase) > min(qrroof, qcroof)) return
 
-    call timer_tic('bulkmicro_sb01/accretion', 1)
+    call timer_tic('bulkmicro_sb/accretion', 1)
 
     !$acc parallel loop collapse(3) default(present)
     do k = max(qrbase,qcbase), min(qrroof, qcroof)
@@ -332,7 +332,7 @@ contains
       end do
     end do
 
-    call timer_toc('bulkmicro_sb01/accretion')
+    call timer_toc('bulkmicro_sb/accretion')
 
   end subroutine accretion
 
@@ -398,7 +398,7 @@ contains
 
     if (qrbase > qrroof) return
 
-    call timer_tic('bulkmicro_sb01/evaporation', 1)
+    call timer_tic('bulkmicro_sb/evaporation', 1)
 
     !$acc parallel loop collapse(3) default(present)
     do k = qrbase, qrroof
@@ -442,7 +442,7 @@ contains
       end do
     end do
 
-    call timer_toc('bulkmicro_sb01/evaporation')
+    call timer_toc('bulkmicro_sb/evaporation')
 
   end subroutine evaporation
 
@@ -504,7 +504,7 @@ contains
 
     real(field_r) :: dt_spl
 
-    call timer_tic('bulkmicro_sb01/sedimentation_rain', 1)
+    call timer_tic('bulkmicro_sb/sedimentation_rain', 1)
 
     precep(:,:,:) = 0 ! zero the precipitation flux field
                       ! the update below is not always performed
@@ -609,7 +609,7 @@ contains
 
     deallocate(qr_spl, Nr_spl)
 
-    call timer_toc('bulkmicro_sb01/sedimentation_rain')
+    call timer_toc('bulkmicro_sb/sedimentation_rain')
 
   end subroutine sedimentation_rain
 
@@ -672,8 +672,6 @@ contains
 
     real(field_r), save :: dt_spl
 
-    call timer_tic('bulkmicro_sb01/sedimentation_rain', 1)
-
     !$acc parallel loop collapse(3) default(present)
     do k = 1, k1
       do j = 2, j1
@@ -684,6 +682,8 @@ contains
     end do
 
     if (qrbase > qrroof) return
+
+    call timer_tic('bulkmicro_sb/sedimentation_rain', 1)
 
     allocate(qr_spl(2:i1,2:j1,1:k1))
     allocate(Nr_spl(2:i1,2:j1,1:k1))
@@ -900,7 +900,7 @@ contains
 
     deallocate(qr_spl, Nr_spl, qr_tmp, Nr_tmp)
 
-    call timer_toc('bulkmicro_sb01/sedimentation_rain')
+    call timer_toc('bulkmicro_sb/sedimentation_rain')
 
   end subroutine sedimentation_rain_gpu
 
