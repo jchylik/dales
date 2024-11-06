@@ -22,6 +22,7 @@ module bulkmicro_kk
   use modprecision, only: field_r
   use modtimer,     only: timer_tic, timer_toc
 
+
   implicit none
 
   private
@@ -427,6 +428,7 @@ contains
 
   end subroutine sedimentation_rain
 
+#ifdef DALES_GPU
   !> Calculate the sedimentation term. Optimized for GPU's.
   !!
   !! \param qr Rain water mixing ratio.
@@ -611,5 +613,6 @@ contains
     call timer_toc('bulkmicro_kk/sedimentation_rain')
 
   end subroutine sedimentation_rain_gpu
+#endif
 
 end module bulkmicro_kk

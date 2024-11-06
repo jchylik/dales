@@ -329,7 +329,7 @@ contains
              sc = k_rr *rhof(k)* qr(i,j,k) * Nr(i,j,k)  &
                   * (1 + kappa_r / lbdr(i,j,k) * pirhow**(1.0_field_r/3))**(-9) &
                   * (1.225_field_r / rhof(k))**0.5_field_r
-             if (Dvr(i,j,k) .gt. 0.30_field_rE-3) then
+             if (Dvr(i,j,k) .gt. 0.30E-3_field_r) then
                phi_br = k_br * (Dvr(i,j,k) - D_eq)
                br = (phi_br + 1) * sc
              else
@@ -500,10 +500,9 @@ contains
     real(field_r), intent(inout) :: Nrp(2:i1,2:j1,1:k1)
     real(field_r), intent(out)   :: precep(2:i1,2:j1,1:k1)
 
-    integer       :: i, j, k, jn, sedimbase
+    integer       :: i, j, k, jn
     integer       :: n_spl      !<  sedimentation time splitting loop
     real(field_r) :: pwcont
-    real(field_r) :: delt_inv
     real(field_r) :: Dgr           !<  lognormal geometric diameter
     real(field_r) :: wfall_qr      !<  fall velocity for qr
     real(field_r) :: wfall_Nr      !<  fall velocity for Nr
@@ -623,6 +622,7 @@ contains
 
   end subroutine sedimentation_rain
 
+#ifdef DALES_GPU
   !> Calculate the sedimentation term.
   !!
   !! \param qr Rain water mixing ratio.
@@ -913,7 +913,7 @@ contains
     call timer_toc('bulkmicro_sb/sedimentation_rain')
 
   end subroutine sedimentation_rain_gpu
-
+#endif
 
   real function sed_flux(Nin, Din, sig2, Ddiv, nnn)
   !*********************************************************************
@@ -1025,11 +1025,11 @@ contains
     real(field_r), intent(in) :: beta, D, D_min, D_max, sig2
     integer, intent(in) :: nnn
 
-    real(field_r), parameter :: eps = 1e-10       &
-                      ,a1 = 0.278393    & !a1 till a4 constants in polynomial fit to the error
-                      ,a2 = 0.230389    & !function 7.1.27 in Abramowitz and Stegun
-                      ,a3 = 0.000972    &
-                      ,a4 = 0.078108
+    real(field_r), parameter :: eps = 1e-10       
+    !                  ,a1 = 0.278393    & !a1 till a4 constants in polynomial fit to the error
+    !                  ,a2 = 0.230389    & !function 7.1.27 in Abramowitz and Stegun
+    !                  ,a3 = 0.000972    &
+    !                  ,a4 = 0.078108
     real(field_r) :: nn, ymin, ymax, erfymin, erfymax, D_inv
 
     D_inv = 1./(eps + D)
