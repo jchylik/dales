@@ -241,7 +241,7 @@ contains
 
     if(lsmagorinsky) then
       ! First level
-      mlen = csk(1) * delta(1) ! (SvdL, 20241106:) default value when lmason = .false.
+      mlen = csz(1) * delta(1) ! (SvdL, 20241106:) default value when lmason = .false.
       !$acc parallel loop collapse(2) private(strain2) async(1)
       do i = 2, i1
         do j = 2, j1
