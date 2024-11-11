@@ -274,7 +274,7 @@ contains
                     ( 0.25_field_r*(w0(i,j+1,2)-w0(i,j-1,2))*dyi + &
                       dvdz(i,j) )**2 )
 
-          RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,1) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
+          RiPrratio  = min( grav/thvf(1) * dthvdz(i,j,1) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
 
           ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1.0 - RiPrratio)
           ekh(i,j,1) = ekm(i,j,1) / Prandtl
