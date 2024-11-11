@@ -276,7 +276,7 @@ contains
 
           RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,1) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
 
-          ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * RiPrratio
+          ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1.0 - RiPrratio)
           ekh(i,j,1) = ekm(i,j,1) / Prandtl
 
           ekm(i,j,1) = max(ekm(i,j,1),ekmin)
@@ -335,7 +335,7 @@ contains
             ! (SvdL, 20241106:) take ratio of gradient Richardson number to critical Richardson number (equal to Prandtl in Smagorinsky-Lilly model)
             RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,k) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! (SvdL, 20241106:) dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
 
-            ekm(i,j,k) = mlen ** 2 * sqrt(2 * strain2) * RiPrratio
+            ekm(i,j,k) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1.0 - RiPrratio)
             ekh(i,j,k) = ekm(i,j,k) / Prandtl
 
             ekm(i,j,k) = max(ekm(i,j,k),ekmin)
