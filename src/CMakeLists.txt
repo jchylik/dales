@@ -1,8 +1,11 @@
-set(target_name dales4.4)
-set(target_lib dales)
-
 # Add all Fortran90 files from this directory
 # This will also add some unwated files, which we will remove again below
+include_directories(
+	"${CMAKE_CURRENT_SOURCE_DIR}/RRTMG/RRTMG_LW"
+	"${CMAKE_CURRENT_SOURCE_DIR}/RRTMG/RRTMG_SW"
+	"${CMAKE_CURRENT_SOURCE_DIR}/RTE-RRTMGP/rte"
+)
+
 FILE(GLOB sourcefiles "*.f90" 
 	"RRTMG/RRTMG_LW/modules/*.f90"
 	"RRTMG/RRTMG_LW/src/*.f90"
@@ -16,7 +19,7 @@ FILE(GLOB sourcefiles "*.f90"
 	"RTE-RRTMGP/extensions/cloud_optics/mo_cloud_optics.F90"
 	"RTE-RRTMGP/examples/mo_simple_netcdf.F90"
 	"RTE-RRTMGP/examples/mo_load_coefficients.F90"
-        "RTE-RRTMGP/examples/all-sky/mo_load_cloud_coefficients.F90")
+  "RTE-RRTMGP/examples/all-sky/mo_load_cloud_coefficients.F90")
 
 # TODO: make more concise
 list(REMOVE_ITEM sourcefiles ${CMAKE_CURRENT_SOURCE_DIR}/test_transposes.f90)
@@ -49,20 +52,21 @@ add_custom_target(tag_git_version ALL
   COMMAND ${CMAKE_COMMAND} -D TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/git-version.cmake
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
-  )
+)
 
 # Stand-alone DALES program
-add_executable(${target_name} ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90)
-target_link_libraries(${target_name} ${NETCDF_LIBS} ${OPTIONAL_LIBS})
-add_dependencies(${target_name} tag_git_version)
+ecbuild_add_executable( TARGET dales.exe 
+												SOURCES ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90 
+												INCLUDES ${NETCDF_INCLUDE_DIR}
+												DEPENDS tag_git_version
+												LIBS NetCDF::NetCDF_Fortran)
 
-# DALES library, e.g. for use with OMUSE
-add_library(${target_lib} ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90)
-add_dependencies(${target_lib} tag_git_version)
-
-# set separate module directories for the program and library targets, to avoid problems during parallel builds (make -j 8)
-set_target_properties(${target_name} PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/program_modules")
-set_target_properties(${target_lib} PROPERTIES Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/library_modules")
-
+# DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
+ecbuild_add_library( TARGET libdales 
+										 SOURCES ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
+										 PUBLIC_INCLUDES ${NETCDF_INCLUDE_DIR}
+										 PUBLIC_LIBS NetCDF::NetCDF_Fortran
+										 DEPENDS tag_git_version
+										 CONDITION ENABLE_DALESLIB )
 
 install(TARGETS ${target_name} ${target_lib} DESTINATION ${CMAKE_BINARY_DIR})
