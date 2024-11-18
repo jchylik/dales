@@ -1,0 +1,60 @@
+{
+  "version": 9,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 17,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "gnu",
+      "displayName": "GNU toolchain",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "mpif90",
+        "CMAKE_Fortran_FLAGS": "-cpp -W -Wall -Wno-tabs -Wno-compare-reals -fdefault-real-8 -fdefault-double-8 -march=native -ffree-line-length-none -std=gnu -Werror=implicit-interface",
+        "CMAKE_Fortran_FLAGS_RELEASE": "-funroll-all-loops -fno-f2c -Ofast -g -fbacktrace",
+        "CMAKE_Fortran_FLAGS_DEBUG": "-finit-real=nan -fbounds-check -fbacktrace -fno-f2c -O0 -g -ffpe-trap=invalid,zero,overflow"
+      }
+    },
+    {
+      "name": "intel",
+      "displayName": "Intel toolchain",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "mpiifx",
+        "CMAKE_Fortran_FLAGS": "-cpp -r8 -ftz",
+        "CMAKE_Fortran_FLAGS_RELEASE": "-O3",
+        "CMAKE_Fortran_FLAGS_DEBUG": "-traceback -fpe1 -O0 -g -check all"
+      }
+    },
+    {
+      "name": "nvidia-cpu",
+      "displayName": "NVIDIA HPC SDK (CPU build)",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "mpif90",
+        "CMAKE_Fortran_FLAGS": "-Mpreprocess -Mr8 -Mfree",
+        "CMAKE_Fortran_FLAGS_RELEASE": "-Ofast",
+        "CMAKE_Fortran_FLAGS_DEBUG": "-traceback -fpe1 -O0 -g -check all"
+      }
+    },
+    {
+      "name": "nvidia-gpu",
+      "displayName": "NVIDIA HPC SDK (GPU build)",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "mpif90",
+        "CMAKE_Fortran_FLAGS": "-Mpreprocess -Mr8 -Mfree -acc=gpu,host -cuda -cudalib=cufft -gpu=cc60,cc70,cc80,cc90,fastmath -Minfo=accel",
+        "CMAKE_Fortran_FLAGS_RELEASE": "-Ofast",
+        "CMAKE_Fortran_FLAGS_DEBUG": "-traceback -fpe1 -O0 -g -check all"
+      }
+    },
+    {
+      "name": "fujitsu",
+      "displayName": "Fujitsu FX compiler",
+      "cacheVariables": {
+        "CMAKE_Fortran_COMPILER": "mpifrtpx",
+        "CMAKE_Fortran_FLAGS": "-Cpp -CcdRR8 -g -Koptmsg=2",
+        "CMAKE_Fortran_FLAGS_RELEASE": "-Kfast -x 128",
+        "CMAKE_Fortran_FLAGS_DEBUG": "-Haefosux -O0"
+      }
+    }
+  ]
+}
