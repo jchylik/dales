@@ -1,12 +1,4 @@
-# Add all Fortran90 files from this directory
-# This will also add some unwated files, which we will remove again below
-include_directories(
-	"${CMAKE_CURRENT_SOURCE_DIR}/RRTMG/RRTMG_LW"
-	"${CMAKE_CURRENT_SOURCE_DIR}/RRTMG/RRTMG_SW"
-	"${CMAKE_CURRENT_SOURCE_DIR}/RTE-RRTMGP/rte"
-)
-
-FILE(GLOB sourcefiles "*.f90" 
+file(GLOB sourcefiles "*.f90" 
 	"RRTMG/RRTMG_LW/modules/*.f90"
 	"RRTMG/RRTMG_LW/src/*.f90"
 	"RRTMG/RRTMG_SW/modules/*.f90"
@@ -54,19 +46,33 @@ add_custom_target(tag_git_version ALL
   BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 )
 
+# Choose the correct FFTW library
+if( ENABLE_FFTW )
+	set( pois_is_sp "$<BOOL:${ENABLE_FP32_POIS}>" )
+	set( fftw_lib "$<IF:${pois_is_sp},FFTW::fftw3f,FFTW::fftw3>" )
+endif()
+
 # Stand-alone DALES program
 ecbuild_add_executable( TARGET dales.exe 
 												SOURCES ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90 
-												INCLUDES ${NETCDF_INCLUDE_DIR}
 												DEPENDS tag_git_version
-												LIBS NetCDF::NetCDF_Fortran)
+												INCLUDES 
+													${NETCDF_INCLUDE_DIR}
+													$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
+												LIBS 
+													NetCDF::NetCDF_Fortran
+													$<$<BOOL:${ENABLE_FFTW}>:${fftw_lib}> )
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
 ecbuild_add_library( TARGET libdales 
 										 SOURCES ${sourcefiles} ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
-										 PUBLIC_INCLUDES ${NETCDF_INCLUDE_DIR}
-										 PUBLIC_LIBS NetCDF::NetCDF_Fortran
 										 DEPENDS tag_git_version
+										 PUBLIC_INCLUDES 
+										   ${NETCDF_INCLUDE_DIR}
+											 $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
+										 PUBLIC_LIBS 
+										   NetCDF::NetCDF_Fortran
+											 $<$<BOOL:${ENABLE_FFTW}>:${fftw_lib}>
 										 CONDITION ENABLE_DALESLIB )
 
 install(TARGETS ${target_name} ${target_lib} DESTINATION ${CMAKE_BINARY_DIR})

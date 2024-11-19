@@ -10,7 +10,7 @@ project( DALES VERSION 5.0.0 LANGUAGES Fortran )
 ecbuild_add_option( FEATURE FFTW
                     DESCRIPTION "Build with FFTW"
                     DEFAULT ON
-                    REQUIRED_PACKAGES "NAME FFTW" )
+                    REQUIRED_PACKAGES "NAME FFTW COMPONENTS single double" )
 
 ecbuild_add_option( FEATURE HYPRE
                     DESCRIPTION "Build with HYPRE"
