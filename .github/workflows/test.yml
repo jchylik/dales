@@ -49,6 +49,6 @@ jobs:
           
       - name: Run tests
         run: |
-          export DALES=~/build/bin/dales
+          export DALES=/home/runner/work/dales/dales/build/bin/dales
           pytest -rf --assert=plain --case=${{ matrix.case }}
           
