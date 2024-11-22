@@ -59,6 +59,9 @@ add_compile_definitions( POIS_PRECISION=${POIS_PRECISION} )
 
 # Additional options
 
+if( ENABLE_FFTW )
+  add_compile_definitions( USE_FFTW )
+endif()
 if( ENABLE_NVTX )
   ecbuild_add_fortran_flags( -lnvToolsExt )
   add_compile_definitions( USE_NVTX )

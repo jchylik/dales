@@ -220,12 +220,6 @@ add_custom_target( tag_git_version ALL
   BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 )
 
-# Choose the correct FFTW library
-if( ENABLE_FFTW )
-	set( pois_is_sp "$<BOOL:${ENABLE_FP32_POIS}>" )
-	set( fftw_lib "$<IF:${pois_is_sp},FFTW::fftw3f,FFTW::fftw3>" )
-endif()
-
 # Stand-alone DALES program
 ecbuild_add_executable( TARGET dales.exe 
 												SOURCES 
@@ -240,10 +234,11 @@ ecbuild_add_executable( TARGET dales.exe
 													$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
 												LIBS 
 													NetCDF::NetCDF_Fortran
-													$<$<BOOL:${ENABLE_FFTW}>:${fftw_lib}> )
+													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3> 
+													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f> )
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
-ecbuild_add_library( TARGET libdales 
+ecbuild_add_library( TARGET libdales
 										 SOURCES
 												${dales_srcs}
 												${rrtmg_lw_srcs}
@@ -251,10 +246,11 @@ ecbuild_add_library( TARGET libdales
 												${rrtmgp_srcs}
 												${CMAKE_CURRENT_BINARY_DIR}/modversion.f90 
 										 DEPENDS tag_git_version
-										 PUBLIC_INCLUDES 
+										 PUBLIC_INCLUDES
 										   ${NETCDF_INCLUDE_DIR}
 											 $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
-										 PUBLIC_LIBS 
+										 PUBLIC_LIBS
 										   NetCDF::NetCDF_Fortran
-											 $<$<BOOL:${ENABLE_FFTW}>:${fftw_lib}>
+												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
+												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
 										 CONDITION ENABLE_DALESLIB )
