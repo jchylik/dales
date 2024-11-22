@@ -1,5 +1,5 @@
 # DALES source files
-set( dales_srcs 
+set( dales_srcs
 	advec_2nd.f90
 	advec_5th.f90
 	advec_6th.f90
@@ -144,7 +144,7 @@ set( rrtmg_lw_srcs
 )
 
 # RRTMG - shortwave
-set( rrtmg_sw_srcs 
+set( rrtmg_sw_srcs
 	RRTMG/RRTMG_SW/modules/parrrsw.f90
 	RRTMG/RRTMG_SW/modules/rrsw_aer.f90
 	RRTMG/RRTMG_SW/modules/rrsw_cld.f90
@@ -221,21 +221,21 @@ add_custom_target( tag_git_version ALL
 )
 
 # Stand-alone DALES program
-ecbuild_add_executable( TARGET dales.exe 
-												SOURCES 
+ecbuild_add_executable( TARGET dales.exe
+												SOURCES
 													${dales_srcs}
 													${rrtmg_lw_srcs}
 													${rrtmg_sw_srcs}
 													${rrtmgp_srcs}
-													${CMAKE_CURRENT_BINARY_DIR}/modversion.f90 
+													${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 												DEPENDS tag_git_version
-												INCLUDES 
+												INCLUDES
 													${NETCDF_INCLUDE_DIR}
 													$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
-												LIBS 
+												LIBS
 													NetCDF::NetCDF_Fortran
-													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3> 
-													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f> )
+													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
+													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
 													$<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}> )
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
@@ -245,14 +245,14 @@ ecbuild_add_library( TARGET libdales
 												${rrtmg_lw_srcs}
 												${rrtmg_sw_srcs}
 												${rrtmgp_srcs}
-												${CMAKE_CURRENT_BINARY_DIR}/modversion.f90 
+												${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 										 DEPENDS tag_git_version
 										 PUBLIC_INCLUDES
 										   ${NETCDF_INCLUDE_DIR}
 											 $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
 										 PUBLIC_LIBS
 										   NetCDF::NetCDF_Fortran
-												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
-												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
+											 $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
+											 $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
 											 $<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}>
 										 CONDITION ENABLE_DALESLIB )

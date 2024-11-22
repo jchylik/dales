@@ -24,12 +24,12 @@ ecbuild_add_option( FEATURE FP32_POIS
                     DESCRIPTION "Use single precision for Poisson solver"
                     DEFAULT OFF )
 
-ecbuild_add_option( FEATURE NVTX 
+ecbuild_add_option( FEATURE NVTX
                     DESCRIPTION "Enable NVTX profiling (only available when using NVIDIA compiler)"
                     CONDITION "${CMAKE_Fortran_COMPILER_ID}" STREQUAL "NVHPC"
                     DEFAULT OFF )
 
-ecbuild_add_option( FEATURE DALESLIB 
+ecbuild_add_option( FEATURE DALESLIB
                     DESCRIPTION "Build DALES libraries for use with OMUSE"
                     DEFAULT OFF )
 
