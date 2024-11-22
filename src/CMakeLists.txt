@@ -220,7 +220,7 @@ add_custom_target( tag_git_version ALL
 )
 
 # Stand-alone DALES program
-ecbuild_add_executable( TARGET dales.exe
+ecbuild_add_executable( TARGET dales
 												SOURCES
 													${dales_srcs}
 													${rrtmg_lw_srcs}
