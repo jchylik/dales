@@ -87,9 +87,9 @@ contains
                      mur, xr, qrp, Nrp, delt, qtpmcr, thlpmcr)
     call bulkmicrotend
 #ifdef DALES_GPU
-    call sedimentation_rain_gpu(qr, Nr, rhof, dzf, qrbase, qrroof, Dvr, lbdr, &
-                                mur, delt, xr, l_lognormal, l_mur_cst, &
-                                mur_cst, qrp, Nrp, qrmask, precep)
+    call sedimentation_rain_gpu(qr, Nr, rhof, dzf, qrbase, qrroof, qrmask, &
+                                l_lognormal, l_mur_cst, mur_cst, delt, Dvr, lbdr, &
+                                mur, xr, qrp, Nrp, precep)
 #else
     call sedimentation_rain(qr, Nr, rhof, dzf, qrbase, qrroof, qrmask, &
                             l_lognormal, l_mur_cst, mur_cst, delt, Dvr, lbdr, &
@@ -583,8 +583,8 @@ contains
             do i = 2, i1
               if (qrmask(i,j,k)) then
 
-                wfall_qr = max(0., (a_tvsb - b_tvsb * (1 + c_tvsb / lbdr(i,j,k))**(-1 * (mur(i,j,k)+4))))
-                wfall_Nr = max(0., (a_tvsb - b_tvsb * (1 + c_tvsb / lbdr(i,j,k))**(-1 * (mur(i,j,k)+1))))
+                wfall_qr = max(0._field_r, (a_tvsb - b_tvsb * (1 + c_tvsb / lbdr(i,j,k))**(-1 * (mur(i,j,k)+4))))
+                wfall_Nr = max(0._field_r, (a_tvsb - b_tvsb * (1 + c_tvsb / lbdr(i,j,k))**(-1 * (mur(i,j,k)+1))))
 
                 sed_qr  = wfall_qr * qr_spl(i,j,k) * rhof(k) ! m/s * kg/m3
                 sed_Nr  = wfall_Nr * Nr_spl(i,j,k)
