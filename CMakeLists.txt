@@ -14,8 +14,7 @@ ecbuild_add_option( FEATURE FFTW
 
 ecbuild_add_option( FEATURE HYPRE
                     DESCRIPTION "Build with HYPRE"
-                    DEFAULT OFF
-                    REQUIRED_PACKAGES "NAME HYPRE" )
+                    DEFAULT OFF )
 
 ecbuild_add_option( FEATURE FP32_FIELDS
                     DESCRIPTION "Use single precision for fields"
@@ -62,6 +61,14 @@ add_compile_definitions( POIS_PRECISION=${POIS_PRECISION} )
 if( ENABLE_FFTW )
   add_compile_definitions( USE_FFTW )
 endif()
+
+if( ENABLE_HYPRE )
+  # For some reason, ecbuild_find_package doesn't find HYPRE (on Mac, at least)
+  find_library( HYPRE_LIB HYPRE REQUIRED )
+  ecbuild_info( "Found HYPRE: ${HYPRE_LIB}" )
+  add_compile_definitions( USE_HYPRE )
+endif()
+
 if( ENABLE_NVTX )
   ecbuild_add_fortran_flags( -lnvToolsExt )
   add_compile_definitions( USE_NVTX )

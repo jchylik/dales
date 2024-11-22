@@ -236,6 +236,7 @@ ecbuild_add_executable( TARGET dales.exe
 													NetCDF::NetCDF_Fortran
 													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3> 
 													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f> )
+													$<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}> )
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
 ecbuild_add_library( TARGET libdales
@@ -253,4 +254,5 @@ ecbuild_add_library( TARGET libdales
 										   NetCDF::NetCDF_Fortran
 												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
 												$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
+											 $<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}>
 										 CONDITION ENABLE_DALESLIB )
