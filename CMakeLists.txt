@@ -36,7 +36,10 @@ ecbuild_add_option( FEATURE DALESLIB
 # Check for required dependencies
 
 ecbuild_find_package( NetCDF REQUIRED COMPONENTS Fortran )
+
 ecbuild_find_mpi( COMPONENTS Fortran REQUIRED )
+ecbuild_info( "MPI compiler: ${MPI_Fortran_COMPILER}")
+set ( CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER} )
 
 # Set precision
 
@@ -74,4 +77,5 @@ if( ENABLE_NVTX )
   add_compile_definitions( USE_NVTX )
 endif()
 
+include( dales_compile_options )
 add_subdirectory( src )
