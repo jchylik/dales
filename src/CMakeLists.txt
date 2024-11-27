@@ -219,39 +219,52 @@ add_custom_target( tag_git_version ALL
   BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 )
 
+# Temporary, because we use CUDA-Fortran in these places
+if( ENABLE_ACC )
+  set_source_files_properties( modmpi.f90 modgpumpiinterface.f90 PROPERTIES COMPILE_OPTIONS -cuda )
+endif()
+
 # Stand-alone DALES program
 ecbuild_add_executable( TARGET dales
-												SOURCES
-													${dales_srcs}
-													${rrtmg_lw_srcs}
-													${rrtmg_sw_srcs}
-													${rrtmgp_srcs}
-													${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
-												DEPENDS tag_git_version
-												INCLUDES
-													${NETCDF_INCLUDE_DIR}
-													$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
-												LIBS
-													NetCDF::NetCDF_Fortran
-													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
-													$<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
-													$<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}> )
+						SOURCES
+							${dales_srcs}
+							${rrtmg_lw_srcs}
+							${rrtmg_sw_srcs}
+							${rrtmgp_srcs}
+							${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
+						DEPENDS tag_git_version
+						INCLUDES
+							${NETCDF_INCLUDE_DIR}
+							$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
+						LIBS
+							NetCDF::NetCDF_Fortran
+                            NetCDF::NetCDF_C
+                            $<$<BOOL:${ENABLE_ACC}>:OpenACC::OpenACC_Fortran>
+                            $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
+                            $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
+                            $<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}> 
+                            $<$<BOOL:${ENABLE_ACC}>:CUDA::cufft> 
+                            $<$<BOOL:${ENABLE_NVTX}>:CUDA::nvToolsExt>
+)
+# Temporary
+target_link_options( dales PUBLIC -cuda )
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
 ecbuild_add_library( TARGET libdales
-										 SOURCES
-												${dales_srcs}
-												${rrtmg_lw_srcs}
-												${rrtmg_sw_srcs}
-												${rrtmgp_srcs}
-												${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
-										 DEPENDS tag_git_version
-										 PUBLIC_INCLUDES
-										   ${NETCDF_INCLUDE_DIR}
-											 $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
-										 PUBLIC_LIBS
-										   NetCDF::NetCDF_Fortran
-											 $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
-											 $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
-											 $<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}>
-										 CONDITION ENABLE_DALESLIB )
+					 SOURCES
+     				   ${dales_srcs}
+					   ${rrtmg_lw_srcs}
+				       ${rrtmg_sw_srcs}
+					   ${rrtmgp_srcs}
+					   ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
+					 DEPENDS tag_git_version
+					 PUBLIC_INCLUDES
+					   ${NETCDF_INCLUDE_DIR}
+					   $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
+					 PUBLIC_LIBS
+					   NetCDF::NetCDF_Fortran
+					   $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3>
+     				   $<$<BOOL:${ENABLE_FFTW}>:FFTW::fftw3f>
+					   $<$<BOOL:${ENABLE_HYPRE}>:${HYPRE_LIB}>
+					 CONDITION ENABLE_DALESLIB
+)
