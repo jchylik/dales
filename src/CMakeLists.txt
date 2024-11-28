@@ -247,7 +247,9 @@ ecbuild_add_executable( TARGET dales
                             $<$<BOOL:${ENABLE_NVTX}>:CUDA::nvToolsExt>
 )
 # Temporary
-target_link_options( dales PUBLIC -cuda )
+if( ENABLE_ACC )
+  target_link_options( dales PUBLIC -cuda )
+endif()
 
 # DALES library, e.g. for use with OMUSE. Only built if -DENABLE_DALESLIB is turned on.
 ecbuild_add_library( TARGET libdales
