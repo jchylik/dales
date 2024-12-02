@@ -3,6 +3,13 @@ cmake_minimum_required( VERSION 3.17 FATAL_ERROR )
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/ecbuild/cmake" )
 find_package( ecbuild REQUIRED )
 
+### Set default CMAKE build type: Release
+if(NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
+      "Choose the type of build, options are: None Debug Release."
+      FORCE)
+endif()
+
 project( DALES VERSION 5.0.0 LANGUAGES Fortran )
 
 # Options
