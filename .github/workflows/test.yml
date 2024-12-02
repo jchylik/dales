@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake --preset=gnu -DCMAKE_BUILD_TYPE=Debug ../
+          cmake -DCMAKE_BUILD_TYPE=Debug ../
 
       - name: Build
         run: |

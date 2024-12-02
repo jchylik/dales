@@ -33,10 +33,17 @@ ecbuild_add_option( FEATURE DALESLIB
                     DESCRIPTION "Build DALES libraries for use with OMUSE"
                     DEFAULT OFF )
 
+ecbuild_add_option( FEATURE ACC
+                    DESCRIPTION "Build with GPU support through OpenACC"
+                    DEFAULT OFF )
+
 # Check for required dependencies
 
-ecbuild_find_package( NetCDF REQUIRED COMPONENTS Fortran )
+ecbuild_find_package( NetCDF REQUIRED COMPONENTS Fortran C )
+
 ecbuild_find_mpi( COMPONENTS Fortran REQUIRED )
+ecbuild_info( "MPI compiler: ${MPI_Fortran_COMPILER}")
+set ( CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER} )
 
 # Set precision
 
@@ -70,8 +77,32 @@ if( ENABLE_HYPRE )
 endif()
 
 if( ENABLE_NVTX )
-  ecbuild_add_fortran_flags( -lnvToolsExt )
   add_compile_definitions( USE_NVTX )
 endif()
 
+# GPU stuff
+
+include( dales_find_cuda )
+
+if( ENABLE_ACC )
+  find_package( OpenACC COMPONENTS Fortran QUIET )
+  if( OpenACC_Fortran_FOUND )
+    set( OpenACC ON )
+    ecbuild_info( "Found OpenACC" )
+  endif()
+
+  # For debug builds, enable accelerator info
+  if( ${CMAKE_Fortran_COMPILER_ID} MATCHES PGI|NVHPC )
+    ecbuild_add_fortran_flags( "-Minfo=accel" BUILD DEBUG ) 
+  endif()
+
+  add_compile_definitions( DALES_GPU )
+endif()
+
+# For GPU builds and/or NVTX profiling, we need the CUDA toolkit
+if( ENABLE_ACC OR ENABLE_NVTX )
+  dales_find_cuda()
+endif()
+
+include( dales_compile_options )
 add_subdirectory( src )

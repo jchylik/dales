@@ -82,10 +82,11 @@ jobs:
         run: |
           if [[ -f /opt/intel/oneapi/setvars.sh ]]; then
             source /opt/intel/oneapi/setvars.sh
+            export FC=mpiifx
           fi
           mkdir build
           cd build
-          cmake --preset=${{ matrix.toolchain }} -DCMAKE_BUILD_TYPE=DEBUG -DENABLE_HYPRE=${{ matrix.hypre }} ../
+          cmake -DCMAKE_BUILD_TYPE=DEBUG -DENABLE_HYPRE=${{ matrix.hypre }} ../
 
       - name : Build
         run: |

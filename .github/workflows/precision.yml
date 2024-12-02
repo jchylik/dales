@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake --preset=gnu \
+          cmake \
             -DENABLE_HYPRE=${{ matrix.hypre }} \
             -DENABLE_FP32_FIELDS=${{ matrix.sp_fields }} \
             -DENABLE_FP32_POIS=${{ matrix.sp_pois }} \
