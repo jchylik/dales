@@ -236,7 +236,7 @@ contains
     use modopenboundary,  only : openboundary_excjs
     implicit none
 
-    real    :: strain2,mlen,RiPrratio
+    real(field_r) :: strain2,mlen,RiPrratio
     integer :: i,j,k
 
     if(lsmagorinsky) then
@@ -274,9 +274,9 @@ contains
                     ( 0.25_field_r*(w0(i,j+1,2)-w0(i,j-1,2))*dyi + &
                       dvdz(i,j) )**2 )
 
-          RiPrratio  = min( grav/thvf(1) * dthvdz(i,j,1) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
+          RiPrratio  = min( grav/thvf(1) * dthvdz(i,j,1) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
 
-          ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1.0 - RiPrratio)
+          ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1 - RiPrratio)
           ekh(i,j,1) = ekm(i,j,1) / Prandtl
 
           ekm(i,j,1) = max(ekm(i,j,1),ekmin)
@@ -333,9 +333,9 @@ contains
               (w0(i  ,j+1,k+1)-w0(i  ,j  ,k+1)) *dyi )**2 )
 
             ! (SvdL, 20241106:) take ratio of gradient Richardson number to critical Richardson number (equal to Prandtl in Smagorinsky-Lilly model)
-            RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,k) / (2. * strain2 * Prandtl) , (1. - eps1) ) ! (SvdL, 20241106:) dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
+            RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,k) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! (SvdL, 20241106:) dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
 
-            ekm(i,j,k) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1.0 - RiPrratio)
+            ekm(i,j,k) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1 - RiPrratio)
             ekh(i,j,k) = ekm(i,j,k) / Prandtl
 
             ekm(i,j,k) = max(ekm(i,j,k),ekmin)
@@ -475,7 +475,7 @@ contains
     use modsubgriddata, only : sgs_surface_fix
     implicit none
 
-    real    tdef2, uwflux, vwflux, local_dudz, local_dvdz, local_dthvdz, horv
+    real(field_r):: tdef2, uwflux, vwflux, local_dudz, local_dvdz, local_dthvdz, horv
     integer i, j, k
 
     !$acc parallel loop collapse(3) default(present) private(tdef2) async(1)
@@ -1034,9 +1034,9 @@ contains
                             +(v0(i,j+1,k)-v0(i,j+1,k-1)) *dzhi(k) ) &
                    -eomm * ( (w0(i,j  ,k)-w0(i,j-1,k  )) *dyi &
                             +(v0(i,j  ,k)-v0(i,j  ,k-1)) *dzhi(k) ))*dyi * anis_fac(k) &
-                + (1./rhobh(k))*&
+                + (1/rhobh(k))*&
                   ( rhobf(k  ) * ekm(i,j,k  ) * (w0(i,j,k+1) -w0(i,j,k  )) * dzfi(k  ) &
-                  - rhobf(k-1) * ekm(i,j,k-1) * (w0(i,j,k  ) -w0(i,j,k-1)) * dzfi(k-1) ) * 2. &
+                  - rhobf(k-1) * ekm(i,j,k-1) * (w0(i,j,k  ) -w0(i,j,k-1)) * dzfi(k-1) ) * 2 &
                                                               * dzhi(k)
         end do
       end do
