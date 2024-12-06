@@ -414,7 +414,7 @@ contains
   subroutine checkinitvalues
     use modsurfdata, only: wtsurf, wqsurf, ustin, thls, isurf, ps, lhetero
     use modglobal,   only: itot, jtot, ysize, xsize, dtmax, runtime, &
-                           startfile, lwarmstart, eps1, imax, jmax
+                           startfile, lwarmstart, eps1, imax, jmax, ih, jh
     use modmpi,      only: myid, nprocx, nprocy, mpierr, MPI_FINALIZE
     use modtimedep,  only: ltimedep
 
@@ -445,6 +445,27 @@ contains
       if (myid == 0) then
         write(6,*)'imax = itot / nprocx = ', imax
       end if
+    end if
+
+    ! Check if we have overlapping ghost cells
+    if (ih > imax) then
+      if (myid == 0) then
+        write(6,'(A13,I4,A54,I4,A40)') 'ERROR: imax (', imax, ') is smaller &
+         &than the required number of ghost cells (', ih, '). Please change &
+         &your MPI configuration.'
+      end if
+      call MPI_FINALIZE(mpierr)
+      stop
+    end if
+
+    if (jh > jmax) then
+      if (myid == 0) then
+        write(6,'(A13,I4,A54,I4,A40)') 'ERROR: jmax (', jmax, ') is smaller &
+         &than the required number of ghost cells (', jh, '). Please change &
+         &your MPI configuration.'
+      end if
+      call MPI_FINALIZE(mpierr)
+      stop
     end if
 
     ! Check namoptions
