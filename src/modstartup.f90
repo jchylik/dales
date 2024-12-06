@@ -421,9 +421,9 @@ contains
     ! Check MPI configuration
     if (mod(jtot, nprocy) /= 0) then
       if (myid == 0)then
-        write(6,*) 'STOP ERROR IN NUMBER OF PROCESSORS'
-        write(6,*) 'nprocy must divide jtot!!! '
-        write(6,*) 'nprocy and jtot are: ', nprocy, jtot
+        write(6,'(A13,I4,A30,I4,A40)') 'ERROR: jtot (', jtot, ') is not &
+          &divisible by nprocy (', nprocy, '). Please change your MPI &
+          &configuration.'
       end if
       call MPI_FINALIZE(mpierr)
       stop
@@ -435,9 +435,9 @@ contains
 
     if (mod(itot, nprocx) /= 0) then
       if (myid == 0) then
-        write(6,*)'STOP ERROR IN NUMBER OF PROCESSORS'
-        write(6,*)'nprocx must divide itot!!! '
-        write(6,*)'nprocx and itot are: ',nprocx,itot
+        write(6,'(A13,I4,A30,I4,A40)') 'ERROR: jtot (', itot, ') is not &
+          &divisible by nprocy (', nprocx, '). Please change your MPI &
+          &configuration.'
       end if
       call MPI_FINALIZE(mpierr)
       stop
