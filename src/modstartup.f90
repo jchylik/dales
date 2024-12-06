@@ -501,7 +501,7 @@ contains
     if (ltimedep .and. lhetero) then
       if (myid == 0) then
         write(6,*) 'WARNING: You selected to use time dependent (ltimedep) &
-          and heterogeneous surface conditions (lhetero) at the same time'
+          &and heterogeneous surface conditions (lhetero) at the same time'
       end if
     end if
 
