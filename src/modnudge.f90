@@ -190,25 +190,77 @@ contains
     dtm = (rtimee - timenudge(t)) / (timenudge(t + 1) - timenudge(t))
     dtp = (timenudge(t + 1) - rtimee) / (timenudge(t + 1) - timenudge(t))
 
-    !$acc parallel loop collapse(3) default(present)
-    do k = 1, kmax
-      do j = 2, j1
-        do i = 2, i1
-          currtnudge = max(1.0_field_r * rdt, &
-                           tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
-          if (lunudge) up(i,j,k) = up(i,j,k) - &
-                (u0av(k) - (unudge(k, t)*dtp + unudge(k,t + 1)*dtm))/currtnudge
-          if (lvnudge) vp(i,j,k) = vp(i,j,k) - &
-                (v0av(k) - (vnudge(k,t)*dtp + vnudge(k,t + 1)*dtm))/currtnudge
-          if (lwnudge) wp(i,j,k) = wp(i,j,k) - &
-                         (-(wnudge(k, t)*dtp + wnudge(k,t + 1)*dtm))/currtnudge
-          if (lthlnudge) thlp(i,j,k) = thlp(i, j, k) - &
-          (thl0av(k) - (thlnudge(k,t)*dtp + thlnudge(k,t + 1)*dtm))/currtnudge
-          if (lqtnudge) qtp(i,j,k) = qtp(i,j,k) - &
-             (qt0av(k) - (qtnudge(k,t)*dtp + qtnudge(k,t + 1)*dtm))/currtnudge
+    if (lunudge) then
+      !$acc parallel loop collapse(3) private(currtnudge) default(present) async
+      do k = 1, kmax
+        do j = 2, j1
+          do i = 2, i1
+            currtnudge = max(1.0_field_r * rdt, &
+                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+            up(i,j,k) = up(i,j,k) - (u0av(k) - (unudge(k,t) * dtp + &
+                        unudge(k,t + 1) * dtm)) / currtnudge
+          end do
         end do
       end do
-    end do
+    end if
+
+    if (lvnudge) then
+      !$acc parallel loop collapse(3) default(present) private(currtnudge) async
+      do k = 1, kmax
+        do j = 2, j1
+          do i = 2, i1
+            currtnudge = max(1.0_field_r * rdt, &
+                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+            vp(i,j,k) = vp(i,j,k) - (v0av(k) - (vnudge(k,t) * dtp + &
+                        vnudge(k,t + 1) * dtm)) / currtnudge
+          end do
+        end do
+      end do
+    end if
+
+    if (lwnudge) then
+      !$acc parallel loop collapse(3) default(present) private(currtnudge) async
+      do k = 1, kmax
+        do j = 2, j1
+          do i = 2, i1
+            currtnudge = max(1.0_field_r * rdt, &
+                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+            wp(i,j,k) = wp(i,j,k) - ((wnudge(k,t) * dtp + wnudge(k,t + 1) &
+                        * dtm)) / currtnudge
+          end do
+        end do
+      end do
+    end if
+
+    if (lthlnudge) then
+      !$acc parallel loop collapse(3) default(present) private(currtnudge) async
+      do k = 1, kmax
+        do j = 2, j1
+          do i = 2, i1
+            currtnudge = max(1.0_field_r * rdt, &
+                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+            thlp(i,j,k) = thlp(i,j,k) - (thl0av(k) - (thlnudge(k,t) * dtp + &
+                          thlnudge(k,t + 1) * dtm)) / currtnudge
+          end do
+        end do
+      end do
+    end if
+
+    if (lqtnudge) then
+      !$acc parallel loop collapse(3) default(present) private(currtnudge) async
+      do k = 1, kmax
+        do j = 2, j1
+          do i = 2, i1
+            currtnudge = max(1.0_field_r * rdt, &
+                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+            qtp(i,j,k) = qtp(i,j,k) - (qt0av(k) - (qtnudge(k,t) * dtp + &
+                        qtnudge(k,t + 1) * dtm)) / currtnudge
+          end do
+        end do
+      end do
+    end if
+
+    !$acc wait
   end subroutine nudge
 
   subroutine exitnudge
