@@ -28,12 +28,15 @@
 
 module modnudge
   use modprecision, only: field_r
+  use modtimer,     only: timer_tic, timer_toc
 
   implicit none
 
   private
 
   save
+
+  character(*), parameter :: modname = "modnudge"
 
   ! Switches for enabling/disabling nudging
   logical :: lnudge = .false.
@@ -70,6 +73,8 @@ contains
     use modglobal, only: ifnamopt, fname_options, runtime, cexpnr, ifinput, &
                          k1, kmax, checknamelisterror
 
+    character(*), parameter :: routine = modname//"::initnudge"
+
     integer      :: ierr, k, t
     character(1) :: chmess1
     real, allocatable, dimension(:) :: height
@@ -79,6 +84,8 @@ contains
     call D_MPI_BCAST(lnudge, 1, 0, comm3d, mpierr)
 
     if (.not. lnudge) return
+
+    call timer_tic(routine, 0)
 
     allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
               wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
@@ -166,11 +173,14 @@ contains
 
     !$acc enter data copyin(timenudge, tnudge, unudge, vnudge, wnudge, &
                             thlnudge, qtnudge)
+    call timer_toc(routine)
   end subroutine initnudge
 
   subroutine nudge
     use modglobal, only: timee, rtimee, i1, j1, kmax, rdt
     use modfields, only: up, vp, wp, thlp, qtp, u0av, v0av, qt0av, thl0av
+
+    character(*), parameter :: routine = modname//"::nudge"
 
     integer :: i, j, k, t
     real    :: dtm, dtp, currtnudge
@@ -261,6 +271,8 @@ contains
     end if
 
     !$acc wait
+
+    call timer_toc(routine)
   end subroutine nudge
 
   subroutine exitnudge
