@@ -844,7 +844,6 @@ contains
       
       call thermodynamics
       call surface
-      call boundary
       
       if ( lopenbc ) then
         call openboundary_ghost()
