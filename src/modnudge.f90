@@ -171,7 +171,6 @@ contains
   subroutine nudge
     use modglobal, only: timee, rtimee, i1, j1, kmax, rdt
     use modfields, only: up, vp, wp, thlp, qtp, u0av, v0av, qt0av, thl0av
-    implicit none
 
     integer :: i, j, k, t
     real    :: dtm, dtp, currtnudge
