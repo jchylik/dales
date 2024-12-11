@@ -31,11 +31,11 @@ module modnudge
 
   ! Switches for enabling/disabling nudging
   logical :: lnudge = .false.
-  logical :: lunudge = .false.
-  logical :: lvnudge = .false.
-  logical :: lwnudge = .false.
-  logical :: lthlnudge = .false.
-  logical :: lqtnudge = .false.
+  logical :: lunudge = .true.
+  logical :: lvnudge = .true.
+  logical :: lwnudge = .true.
+  logical :: lthlnudge = .true.
+  logical :: lqtnudge = .true.
 
   ! Nudging profiles
   real(field_r), allocatable :: tnudge(:,:)
@@ -79,7 +79,8 @@ contains
     character(1) :: chmess1
     real, allocatable, dimension(:) :: height
 
-    namelist /NAMNUDGE/ lnudge, tnudgefac
+    namelist /NAMNUDGE/ lnudge, lunudge, lvnudge, lwnudge, lthlnudge, &
+                        lqtnudge, tnudgefac
 
     if (myid == 0) then
       open(ifnamopt, file=fname_options, status='old', iostat=ierr)
