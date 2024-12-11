@@ -53,8 +53,13 @@ module modnudge
   real(field_r), allocatable :: wnudge(:,:)
   real(field_r), allocatable :: thlnudge(:,:)
   real(field_r), allocatable :: qtnudge(:,:)
+  ! Nudging constants (only supported with DEPHY input)
+  real(field_r), allocatable :: tunudge(:,:)
+  real(field_r), allocatable :: tvnudge(:,:)
+  real(field_r), allocatable :: twnudge(:,:)
+  real(field_r), allocatable :: tthlnudge(:,:)
+  real(field_r), allocatable :: tqtnudge(:,:)
 
-  ! List of nudging time steps
   real(field_r), allocatable :: timenudge(:)
 
   ! Nudging timescale
@@ -69,35 +74,19 @@ module modnudge
 contains
 
   subroutine initnudge
-    use modmpi,    only: myid, mpierr, comm3d, D_MPI_BCAST
-    use modglobal, only: ifnamopt, fname_options, runtime, cexpnr, ifinput, &
-                         k1, kmax, checknamelisterror
+    use modmpi,     only: myid, mpierr, comm3d, D_MPI_BCAST
+    use modglobal,  only: ifnamopt, fname_options, runtime, cexpnr, ifinput, &
+                          k1, kmax, checknamelisterror, lstart_netcdf
+    use modstat_nc
 
     character(*), parameter :: routine = modname//"::initnudge"
 
     integer      :: ierr, k, t
+    integer      :: ncid, varid, dimid
     character(1) :: chmess1
     real, allocatable, dimension(:) :: height
 
     namelist /NAMNUDGE/ lnudge, tnudgefac
-
-    call D_MPI_BCAST(lnudge, 1, 0, comm3d, mpierr)
-
-    if (.not. lnudge) return
-
-    call timer_tic(routine, 0)
-
-    allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
-              wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
-    allocate(timenudge(0:ntnudge), height(k1))
-
-    tnudge = 0
-    unudge = 0
-    vnudge = 0
-    wnudge = 0
-    thlnudge = 0
-    qtnudge = 0
-    timenudge = 0
 
     if (myid == 0) then
       open(ifnamopt, file=fname_options, status='old', iostat=ierr)
@@ -107,63 +96,149 @@ contains
       close(ifnamopt)
     end if
 
-    if (myid == 0) then
-      t = 0
-      open(ifinput, file='nudge.inp.'//cexpnr)
+    call D_MPI_BCAST(lnudge, 1, 0, comm3d, mpierr)
 
-      do while (timenudge(t) < runtime)
-        t = t + 1
-        if (t > ntnudge) then
-          write(*, *) "Too many time points in file ", 'nudge.inp.'//cexpnr, &
-          &", the limit is ntnudge = ", ntnudge
-          stop
+    if (.not. lnudge) return
+
+    call timer_tic(routine, 0)
+
+    if (myid == 0) then
+      if (lstart_netcdf) then
+        call nchandle_error(nf90_open("init."//cexpnr//".nc", NF90_NOWRITE, &
+                            ncid))
+
+        ! Get the number of forcing time steps
+        call nchandle_error(nf90_inq_dimid(ncid, "time", dimid))
+        call nchandle_error(nf90_inquire_dimension(ncid, dimid, len=ntnudge))
+        
+        if (lunudge) then
+          allocate(unudge(k1,ntnudge), tunudge(k1,ntnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "ua_nud", varid))
+          call nchandle_error(nf90_get_var(ncid, varid, unudge))
+          call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_ua", &
+                              varid))
+          call nchandle_error(nf90_get_var(ncid, varid, tunudge))
         end if
 
-        chmess1 = "#"
-        ierr = 1 ! not zero
-        !search for the next line consisting of "# time", from there onwards the profiles will be read
-        do while (.not. (chmess1 == "#" .and. ierr == 0))
-          read(ifinput, *, iostat=ierr) chmess1, timenudge(t)
-          if (ierr < 0) then
-            stop 'STOP: No time dependend nudging data for end of run'
+        if (lvnudge) then
+          allocate(vnudge(k1,ntnudge), tvnudge(k1,ntnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "va_nud", varid))
+          call nchandle_error(nf90_get_var(ncid, varid, vnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_va", &
+                              varid))
+          call nchandle_error(nf90_get_var(ncid, varid, tvnudge))
+        end if
+
+        if (lwnudge) then
+          allocate(wnudge(k1,ntnudge), twnudge(k1,ntnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "wa_nud", varid))
+          call nchandle_error(nf90_get_var(ncid, varid, wnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_wa", &
+                              varid))
+          call nchandle_error(nf90_get_var(ncid, varid, twnudge))
+        end if
+
+        if (lthlnudge) then
+          allocate(thlnudge(k1,ntnudge), tthlnudge(k1,ntnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "thetal_nud", varid))
+          call nchandle_error(nf90_get_var(ncid, varid, thlnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_thetal", &
+                              varid))
+          call nchandle_error(nf90_get_var(ncid, varid, tthlnudge))
+        end if
+
+        if (lqtnudge) then
+          allocate(qtnudge(k1,ntnudge), tqtnudge(k1,ntnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "qt_nud", varid))
+          call nchandle_error(nf90_get_var(ncid, varid, qtnudge))
+          call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_qt", &
+                              varid))
+          call nchandle_error(nf90_get_var(ncid, varid, tqtnudge))
+        end if
+      else
+        allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
+                 wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
+        allocate(tunudge(k1,ntnudge), tvnudge(k1,ntnudge), &
+                 twnudge(k1,ntnudge), tthlnudge(k1,ntnudge), &
+                 tqtnudge(k1,ntnudge))
+        allocate(timenudge(0:ntnudge), height(k1))
+
+        tnudge = 0
+        unudge = 0
+        vnudge = 0
+        wnudge = 0
+        thlnudge = 0
+        qtnudge = 0
+        timenudge = 0
+
+        t = 0
+        open(ifinput, file='nudge.inp.'//cexpnr)
+
+        do while (timenudge(t) < runtime)
+          t = t + 1
+          if (t > ntnudge) then
+            write(*, *) "Too many time points in file ", 'nudge.inp.'//cexpnr, &
+            &", the limit is ntnudge = ", ntnudge
+            stop
           end if
 
-        end do
-        write(6, *) 'time', timenudge(t)
-        write(6, *) ' height    t_nudge    u_nudge    v_nudge    w_nudge    &
-        &thl_nudge    qt_nudge'
-        do k = 1, kmax
-          read(ifinput, *) &
-            height(k), &
-            tnudge(k,t), &
-            unudge(k,t), &
-            vnudge(k,t), &
-            wnudge(k,t), &
-            thlnudge(k,t), &
-            qtnudge(k,t)
-        end do
+          chmess1 = "#"
+          ierr = 1 ! not zero
+          !search for the next line consisting of "# time", from there onwards the profiles will be read
+          do while (.not. (chmess1 == "#" .and. ierr == 0))
+            read(ifinput, *, iostat=ierr) chmess1, timenudge(t)
+            if (ierr < 0) then
+              stop 'STOP: No time dependend nudging data for end of run'
+            end if
 
-        do k = kmax, 1, -1
-          write(6, '(f7.1,6e12.4)') &
-            height(k), &
-            tnudge(k,t), &
-            unudge(k,t), &
-            vnudge(k,t), &
-            wnudge(k,t), &
-            thlnudge(k,t), &
-            qtnudge(k,t)
+          end do
+          write(6, *) 'time', timenudge(t)
+          write(6, *) ' height    t_nudge    u_nudge    v_nudge    w_nudge    &
+          &thl_nudge    qt_nudge'
+          do k = 1, kmax
+            read(ifinput, *) &
+              height(k), &
+              tnudge(k,t), &
+              unudge(k,t), &
+              vnudge(k,t), &
+              wnudge(k,t), &
+              thlnudge(k,t), &
+              qtnudge(k,t)
+          end do
+
+          do k = kmax, 1, -1
+            write(6, '(f7.1,6e12.4)') &
+              height(k), &
+              tnudge(k,t), &
+              unudge(k,t), &
+              vnudge(k,t), &
+              wnudge(k,t), &
+              thlnudge(k,t), &
+              qtnudge(k,t)
+          end do
         end do
-      end do
-      close (ifinput)
-      tnudge = tnudgefac * tnudge
+        close (ifinput)
+        tnudge = tnudgefac * tnudge
+
+        tunudge(:,:) = tnudge(:,)
+        tvnudge(:,:) = tnudge(:,:)
+        twnudge(:,:) = tnudge(:,:)
+        tthlnudge(:,:) = tnudge(:,:)
+        tqtnudge(:,:) = tnudge(:,:)
+      end if
     end if
+
     call D_MPI_BCAST(timenudge, ntnudge + 1, 0, comm3d, mpierr)
-    call D_MPI_BCAST(tnudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(unudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(vnudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(wnudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(thlnudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(qtnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    call D_MPI_BCAST(tunudge, k1 * ntnudge, 0, comm3d, mpierr)
+    call D_MPI_BCAST(tvnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    call D_MPI_BCAST(twnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    call D_MPI_BCAST(tthlnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    call D_MPI_BCAST(tqtnudge, k1 * ntnudge, 0, comm3d, mpierr)
 
     lunudge = any(abs(unudge) > 1e-8)
     lvnudge = any(abs(vnudge) > 1e-8)
@@ -171,8 +246,10 @@ contains
     lthlnudge = any(abs(thlnudge) > 1e-8)
     lqtnudge = any(abs(qtnudge) > 1e-8)
 
-    !$acc enter data copyin(timenudge, tnudge, unudge, vnudge, wnudge, &
-                            thlnudge, qtnudge)
+    !$acc enter data copyin(timenudge, unudge, vnudge, wnudge, thlnudge, &
+    !$acc&                  qtnudge, tunudge, tvnudge, twnudge, tthlnudge, &
+    !$acc&                  tqtnudge)
+
     call timer_toc(routine)
   end subroutine initnudge
 
@@ -188,6 +265,8 @@ contains
     if (.not. (lnudge)) return
 
     if (timee == 0) return
+
+    call timer_tic(routine, 0)
 
     t = 1
     do while (rtimee > timenudge(t))
@@ -206,7 +285,7 @@ contains
         do j = 2, j1
           do i = 2, i1
             currtnudge = max(1.0_field_r * rdt, &
-                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+                             tunudge(k,t) * dtp + tunudge(k,t + 1) * dtm)
             up(i,j,k) = up(i,j,k) - (u0av(k) - (unudge(k,t) * dtp + &
                         unudge(k,t + 1) * dtm)) / currtnudge
           end do
@@ -220,7 +299,7 @@ contains
         do j = 2, j1
           do i = 2, i1
             currtnudge = max(1.0_field_r * rdt, &
-                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+                             tvnudge(k,t) * dtp + tvnudge(k,t + 1) * dtm)
             vp(i,j,k) = vp(i,j,k) - (v0av(k) - (vnudge(k,t) * dtp + &
                         vnudge(k,t + 1) * dtm)) / currtnudge
           end do
@@ -234,7 +313,7 @@ contains
         do j = 2, j1
           do i = 2, i1
             currtnudge = max(1.0_field_r * rdt, &
-                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+                             twnudge(k,t) * dtp + twnudge(k,t + 1) * dtm)
             wp(i,j,k) = wp(i,j,k) - ((wnudge(k,t) * dtp + wnudge(k,t + 1) &
                         * dtm)) / currtnudge
           end do
@@ -248,7 +327,7 @@ contains
         do j = 2, j1
           do i = 2, i1
             currtnudge = max(1.0_field_r * rdt, &
-                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+                             tthlnudge(k,t) * dtp + tthlnudge(k,t + 1) * dtm)
             thlp(i,j,k) = thlp(i,j,k) - (thl0av(k) - (thlnudge(k,t) * dtp + &
                           thlnudge(k,t + 1) * dtm)) / currtnudge
           end do
@@ -262,7 +341,7 @@ contains
         do j = 2, j1
           do i = 2, i1
             currtnudge = max(1.0_field_r * rdt, &
-                             tnudge(k,t) * dtp + tnudge(k,t + 1) * dtm)
+                             tqtnudge(k,t) * dtp + tqtnudge(k,t + 1) * dtm)
             qtp(i,j,k) = qtp(i,j,k) - (qt0av(k) - (qtnudge(k,t) * dtp + &
                         qtnudge(k,t + 1) * dtm)) / currtnudge
           end do
