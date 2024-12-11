@@ -269,8 +269,8 @@ contains
 
     character(*), parameter :: routine = modname//"::nudge"
 
-    integer :: i, j, k, t
-    real    :: dtm, dtp, currtnudge
+    integer       :: i, j, k, t
+    real(field_r) :: dtm, dtp, currtnudge
 
     if (.not. (lnudge)) return
 
