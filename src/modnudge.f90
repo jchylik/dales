@@ -103,76 +103,90 @@ contains
 
     call timer_tic(routine, 0)
 
-    if (myid == 0) then
-      if (lstart_netcdf) then
+    if (lstart_netcdf) then
+      if (myid == 0) then
         call nchandle_error(nf90_open("init."//cexpnr//".nc", NF90_NOWRITE, &
                             ncid))
 
         ! Get the number of forcing time steps
         call nchandle_error(nf90_inq_dimid(ncid, "time", dimid))
         call nchandle_error(nf90_inquire_dimension(ncid, dimid, len=ntnudge))
-        
-        if (lunudge) then
-          allocate(unudge(k1,ntnudge), tunudge(k1,ntnudge))
+      end if
+
+      call D_MPI_BCAST(ntnudge, 1, 0, comm3d, mpierr)
+      
+      if (lunudge) then
+        allocate(unudge(k1,ntnudge), tunudge(k1,ntnudge))
+        if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "ua_nud", varid))
           call nchandle_error(nf90_get_var(ncid, varid, unudge))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_ua", &
                               varid))
           call nchandle_error(nf90_get_var(ncid, varid, tunudge))
         end if
+      end if
 
-        if (lvnudge) then
-          allocate(vnudge(k1,ntnudge), tvnudge(k1,ntnudge))
+      if (lvnudge) then
+        allocate(vnudge(k1,ntnudge), tvnudge(k1,ntnudge))
+        if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "va_nud", varid))
           call nchandle_error(nf90_get_var(ncid, varid, vnudge))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_va", &
                               varid))
           call nchandle_error(nf90_get_var(ncid, varid, tvnudge))
         end if
+      end if
 
-        if (lwnudge) then
-          allocate(wnudge(k1,ntnudge), twnudge(k1,ntnudge))
+      if (lwnudge) then
+        allocate(wnudge(k1,ntnudge), twnudge(k1,ntnudge))
+        if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "wa_nud", varid))
           call nchandle_error(nf90_get_var(ncid, varid, wnudge))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_wa", &
                               varid))
           call nchandle_error(nf90_get_var(ncid, varid, twnudge))
         end if
+      end if
 
-        if (lthlnudge) then
-          allocate(thlnudge(k1,ntnudge), tthlnudge(k1,ntnudge))
+      if (lthlnudge) then
+        allocate(thlnudge(k1,ntnudge), tthlnudge(k1,ntnudge))
+        if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "thetal_nud", varid))
           call nchandle_error(nf90_get_var(ncid, varid, thlnudge))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_thetal", &
                               varid))
           call nchandle_error(nf90_get_var(ncid, varid, tthlnudge))
         end if
+      end if
 
-        if (lqtnudge) then
-          allocate(qtnudge(k1,ntnudge), tqtnudge(k1,ntnudge))
+      if (lqtnudge) then
+        allocate(qtnudge(k1,ntnudge), tqtnudge(k1,ntnudge))
+        if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "qt_nud", varid))
           call nchandle_error(nf90_get_var(ncid, varid, qtnudge))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_qt", &
                               varid))
           call nchandle_error(nf90_get_var(ncid, varid, tqtnudge))
         end if
-      else
-        allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
-                 wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
-        allocate(tunudge(k1,ntnudge), tvnudge(k1,ntnudge), &
-                 twnudge(k1,ntnudge), tthlnudge(k1,ntnudge), &
-                 tqtnudge(k1,ntnudge))
-        allocate(timenudge(0:ntnudge), height(k1))
+      end if
+    else
+      allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
+               wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
+      allocate(tunudge(k1,ntnudge), tvnudge(k1,ntnudge), &
+               twnudge(k1,ntnudge), tthlnudge(k1,ntnudge), &
+               tqtnudge(k1,ntnudge))
+      allocate(timenudge(0:ntnudge), height(k1))
 
-        tnudge = 0
-        unudge = 0
-        vnudge = 0
-        wnudge = 0
-        thlnudge = 0
-        qtnudge = 0
-        timenudge = 0
+      tnudge = 0
+      unudge = 0
+      vnudge = 0
+      wnudge = 0
+      thlnudge = 0
+      qtnudge = 0
+      timenudge = 0
 
-        t = 0
+      t = 0
+      if (myid == 0) then
         open(ifinput, file='nudge.inp.'//cexpnr)
 
         do while (timenudge(t) < runtime)
@@ -219,14 +233,15 @@ contains
           end do
         end do
         close (ifinput)
-        tnudge = tnudgefac * tnudge
-
-        tunudge(:,:) = tnudge(:,:)
-        tvnudge(:,:) = tnudge(:,:)
-        twnudge(:,:) = tnudge(:,:)
-        tthlnudge(:,:) = tnudge(:,:)
-        tqtnudge(:,:) = tnudge(:,:)
       end if
+
+      tnudge = tnudgefac * tnudge
+
+      tunudge(:,:) = tnudge(:,:)
+      tvnudge(:,:) = tnudge(:,:)
+      twnudge(:,:) = tnudge(:,:)
+      tthlnudge(:,:) = tnudge(:,:)
+      tqtnudge(:,:) = tnudge(:,:)
     end if
 
     call D_MPI_BCAST(timenudge, ntnudge + 1, 0, comm3d, mpierr)
@@ -356,7 +371,31 @@ contains
   end subroutine nudge
 
   subroutine exitnudge
+    if (.not. lnudge) return
+
     deallocate(timenudge)
+
+    if (allocated(tnudge)) deallocate(tnudge)
+    
+    if (lunudge) then
+      deallocate(unudge, tunudge)
+    end if
+
+    if (lvnudge) then
+      deallocate(vnudge, tvnudge)
+    end if
+
+    if (lwnudge) then
+      deallocate(wnudge, twnudge)
+    end if
+
+    if (lthlnudge) then
+      deallocate(thlnudge, tthlnudge)
+    end if
+
+    if (lqtnudge) then
+      deallocate(qtnudge, tqtnudge)
+    end if
   end subroutine exitnudge
 
 end module
