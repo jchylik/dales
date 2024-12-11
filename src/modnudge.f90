@@ -1,14 +1,5 @@
 !> \file modnudge.f90
-!!  Nudges theta_l and q_t profiles to the initial profiles on a timescale tnudgeT
-!>
-
-!>
-!!  Nudges theta_l and q_t profiles to the initial profiles on a timescale tnudgeT
-!>
-!!  \author Thijs Heus,MPI-M
-!!  \par Revision list
-!!  \todo Documentation
-!  This file is part of DALES.
+! This file is part of DALES.
 !
 ! DALES is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -23,9 +14,9 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !
-!  Copyright 1993-2009 Delft University of Technology, Wageningen University, Utrecht University, KNMI
+! Copyright 1993-2024 The DALES team.
 !
-
+!> Module for nudging prognostic fields to some provided profiles.
 module modnudge
   use modprecision, only: field_r
   use modtimer,     only: timer_tic, timer_toc
@@ -73,6 +64,8 @@ module modnudge
 
 contains
 
+  !> Read nudging profiles and nudging constants from input, and allocate
+  !! memory.
   subroutine initnudge
     use modmpi,     only: myid, mpierr, comm3d, D_MPI_BCAST
     use modglobal,  only: ifnamopt, fname_options, runtime, cexpnr, ifinput, &
@@ -269,6 +262,7 @@ contains
     call timer_toc(routine)
   end subroutine initnudge
 
+  !> Perform nudging of velocities, temperature and humidity fields.
   subroutine nudge
     use modglobal, only: timee, rtimee, i1, j1, kmax, rdt
     use modfields, only: up, vp, wp, thlp, qtp, u0av, v0av, qt0av, thl0av
@@ -370,6 +364,7 @@ contains
     call timer_toc(routine)
   end subroutine nudge
 
+  !> Deallocates memory.
   subroutine exitnudge
     if (.not. lnudge) return
 
