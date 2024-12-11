@@ -221,7 +221,7 @@ contains
         close (ifinput)
         tnudge = tnudgefac * tnudge
 
-        tunudge(:,:) = tnudge(:,)
+        tunudge(:,:) = tnudge(:,:)
         tvnudge(:,:) = tnudge(:,:)
         twnudge(:,:) = tnudge(:,:)
         tthlnudge(:,:) = tnudge(:,:)
