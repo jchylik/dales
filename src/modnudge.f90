@@ -260,18 +260,28 @@ contains
       tqtnudge(:,:) = tnudge(:,:)
     end if
 
-    call D_MPI_BCAST(timenudge, ntnudge + 1, 0, comm3d, mpierr)
-    call D_MPI_BCAST(unudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(vnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(wnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(thlnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(qtnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(tunudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(tvnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(twnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(tthlnudge, k1 * ntnudge, 0, comm3d, mpierr)
-    call D_MPI_BCAST(tqtnudge, k1 * ntnudge, 0, comm3d, mpierr)
 
+    call D_MPI_BCAST(timenudge, ntnudge + 1, 0, comm3d, mpierr)
+    if (lunudge) then
+      call D_MPI_BCAST(unudge, k1 * ntnudge, 0, comm3d, mpierr)
+      call D_MPI_BCAST(tunudge, k1 * ntnudge, 0, comm3d, mpierr)
+    end if
+    if (lvnudge) then
+      call D_MPI_BCAST(vnudge, k1 * ntnudge, 0, comm3d, mpierr)
+      call D_MPI_BCAST(tvnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    end if
+    if (lwnudge) then
+      call D_MPI_BCAST(wnudge, k1 * ntnudge, 0, comm3d, mpierr)
+      call D_MPI_BCAST(twnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    end if
+    if (lthlnudge) then
+      call D_MPI_BCAST(thlnudge, k1 * ntnudge, 0, comm3d, mpierr)
+      call D_MPI_BCAST(tthlnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    end if
+    if (lqtnudge) then
+      call D_MPI_BCAST(qtnudge, k1 * ntnudge, 0, comm3d, mpierr)
+      call D_MPI_BCAST(tqtnudge, k1 * ntnudge, 0, comm3d, mpierr)
+    end if
 
     !$acc enter data copyin(timenudge, unudge, vnudge, wnudge, thlnudge, &
     !$acc&                  qtnudge, tunudge, tvnudge, twnudge, tthlnudge, &
