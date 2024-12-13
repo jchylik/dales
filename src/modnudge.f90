@@ -125,10 +125,10 @@ contains
         allocate(unudge(k1,ntnudge), tunudge(k1,ntnudge))
         if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "ua_nud", varid))
-          call nchandle_error(nf90_get_var(ncid, varid, unudge))
+          call nchandle_error(nf90_get_var(ncid, varid, unudge(1:kmax,:)))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_ua", &
                               varid))
-          call nchandle_error(nf90_get_var(ncid, varid, tunudge))
+          call nchandle_error(nf90_get_var(ncid, varid, tunudge(1:kmax,:)))
         end if
       end if
 
@@ -136,10 +136,10 @@ contains
         allocate(vnudge(k1,ntnudge), tvnudge(k1,ntnudge))
         if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "va_nud", varid))
-          call nchandle_error(nf90_get_var(ncid, varid, vnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, vnudge(1:kmax,:)))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_va", &
                               varid))
-          call nchandle_error(nf90_get_var(ncid, varid, tvnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, tvnudge(1:kmax,:)))
         end if
       end if
 
@@ -158,10 +158,10 @@ contains
         allocate(thlnudge(k1,ntnudge), tthlnudge(k1,ntnudge))
         if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "thetal_nud", varid))
-          call nchandle_error(nf90_get_var(ncid, varid, thlnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, thlnudge(1:kmax,:)))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_thetal", &
                               varid))
-          call nchandle_error(nf90_get_var(ncid, varid, tthlnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, tthlnudge(1:kmax,:)))
         end if
       end if
 
@@ -169,10 +169,10 @@ contains
         allocate(qtnudge(k1,ntnudge), tqtnudge(k1,ntnudge))
         if (myid == 0) then
           call nchandle_error(nf90_inq_varid(ncid, "qt_nud", varid))
-          call nchandle_error(nf90_get_var(ncid, varid, qtnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, qtnudge(1:kmax,:)))
           call nchandle_error(nf90_inq_varid(ncid, "nudging_constant_qt", &
                               varid))
-          call nchandle_error(nf90_get_var(ncid, varid, tqtnudge))
+          call nchandle_error(nf90_get_var(ncid, varid, tqtnudge(1:kmax,:)))
         end if
       end if
     else
