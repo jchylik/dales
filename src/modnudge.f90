@@ -113,6 +113,13 @@ contains
       end if
 
       call D_MPI_BCAST(ntnudge, 1, 0, comm3d, mpierr)
+      allocate(timenudge(0:ntnudge))
+      timenudge(:) = 0
+      if (myid == 0) then
+        call nchandle_error(nf90_inq_varid(ncid, "time", varid))
+        call nchandle_error(nf90_get_var(ncid, varid, timenudge(1:)))
+      end if
+      call D_MPI_BCAST(timenudge, ntnudge + 1, 0, comm3d, mpierr)
       
       if (lunudge) then
         allocate(unudge(k1,ntnudge), tunudge(k1,ntnudge))
