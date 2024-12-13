@@ -245,6 +245,12 @@ contains
         close (ifinput)
       end if
 
+      lunudge = any(abs(unudge) > 1e-8)
+      lvnudge = any(abs(vnudge) > 1e-8)
+      lwnudge = any(abs(wnudge) > 1e-8)
+      lthlnudge = any(abs(thlnudge) > 1e-8)
+      lqtnudge = any(abs(qtnudge) > 1e-8)
+
       tnudge = tnudgefac * tnudge
 
       tunudge(:,:) = tnudge(:,:)
@@ -266,11 +272,6 @@ contains
     call D_MPI_BCAST(tthlnudge, k1 * ntnudge, 0, comm3d, mpierr)
     call D_MPI_BCAST(tqtnudge, k1 * ntnudge, 0, comm3d, mpierr)
 
-    lunudge = any(abs(unudge) > 1e-8)
-    lvnudge = any(abs(vnudge) > 1e-8)
-    lwnudge = any(abs(wnudge) > 1e-8)
-    lthlnudge = any(abs(thlnudge) > 1e-8)
-    lqtnudge = any(abs(qtnudge) > 1e-8)
 
     !$acc enter data copyin(timenudge, unudge, vnudge, wnudge, thlnudge, &
     !$acc&                  qtnudge, tunudge, tvnudge, twnudge, tthlnudge, &
