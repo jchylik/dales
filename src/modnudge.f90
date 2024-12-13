@@ -91,6 +91,11 @@ contains
     end if
 
     call D_MPI_BCAST(lnudge, 1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(lunudge, 1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(lvnudge, 1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(lwnudge, 1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(lthlnudge, 1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(lqtnudge, 1, 0, comm3d, mpierr)
     call D_MPI_BCAST(tnudgefac, 1, 0, comm3d, mpierr)
 
     if (.not. lnudge) return
