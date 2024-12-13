@@ -175,6 +175,10 @@ contains
           call nchandle_error(nf90_get_var(ncid, varid, tqtnudge(1:kmax,:)))
         end if
       end if
+
+      if (myid == 0) then
+        call nchandle_error(nf90_close(ncid))
+      end if
     else
       allocate(tnudge(k1,ntnudge), unudge(k1,ntnudge), vnudge(k1,ntnudge), &
                wnudge(k1,ntnudge), thlnudge(k1,ntnudge), qtnudge(k1,ntnudge))
