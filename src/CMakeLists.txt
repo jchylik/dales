@@ -234,7 +234,7 @@ ecbuild_add_executable( TARGET dales
 							${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 						DEPENDS tag_git_version
 						INCLUDES
-							${NETCDF_INCLUDE_DIR}
+              ${NetCDF_Fortran_INCLUDE_DIR}
 							$<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
 						LIBS
 							NetCDF::NetCDF_Fortran
@@ -261,7 +261,7 @@ ecbuild_add_library( TARGET libdales
 					   ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
 					 DEPENDS tag_git_version
 					 PUBLIC_INCLUDES
-					   ${NETCDF_INCLUDE_DIR}
+             ${NetCDF_Fortran_INCLUDE_DIR}
 					   $<$<BOOL:${ENABLE_FFTW}>:${FFTW_INCLUDE_DIRS}>
 					 PUBLIC_LIBS
 					   NetCDF::NetCDF_Fortran
