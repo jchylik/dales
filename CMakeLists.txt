@@ -80,6 +80,8 @@ add_compile_definitions( POIS_PRECISION=${POIS_PRECISION} )
 
 if( ENABLE_FP32_RAD )
   add_compile_definitions( RTE_USE_SP )
+  set( ENABLE_RRTMG OFF )
+  ecbuild_info( "RRTMG is disabled because single precision is selected for RTE-RRTMGP" )
 endif()
 
 # Additional options
