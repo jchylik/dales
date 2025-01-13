@@ -265,8 +265,8 @@ contains
       allocate(emis(nbndlw,ncol))
       emis=0.95
       !$acc enter data copyin(emis, sources_lw)
-      !$acc enter data create(sources_lw%lay_source, sources_lw%lev_source_inc, &
-      !$acc&                  sources_lw%lev_source_dec, sources_lw%sfc_source, sources_lw%sfc_source_Jac)
+      !$acc enter data create(sources_lw%lay_source, sources_lw%lev_source, &
+      !$acc&                  sources_lw%sfc_source, sources_lw%sfc_source_Jac)
 
       ! Define lw fluxes pointers
       fluxes_lw%flux_up => lwUp_slice(:,:)
