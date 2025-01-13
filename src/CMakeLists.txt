@@ -229,8 +229,8 @@ endif()
 ecbuild_add_executable( TARGET dales
                         SOURCES
                           ${dales_srcs}
-                          ${rrtmg_lw_srcs}
-                          ${rrtmg_sw_srcs}
+                          $<$<BOOL:${ENABLE_RRTMG}>:${rrtmg_lw_srcs}>
+                          $<$<BOOL:${ENABLE_RRTMG}>:${rrtmg_sw_srcs}>
                           ${rrtmgp_srcs}
                           ${CMAKE_CURRENT_BINARY_DIR}/modversion.f90
                         DEPENDS tag_git_version
