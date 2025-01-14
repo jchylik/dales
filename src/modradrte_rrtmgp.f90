@@ -74,6 +74,7 @@ contains
     use mo_load_coefficients,  only: load_and_init
     use mo_load_cloud_coefficients, &
                                only: load_cld_lutcoeff, load_cld_padecoeff
+    use mo_rte_config,         only: rte_config_checks
 
     ! DALES modules
     use modradrrtmg,           only: readSounding, readTraceProfs
@@ -325,6 +326,8 @@ contains
         fluxes_cs_sw%flux_dn => swDownCS_slice(:,:)
       endif
     endif
+
+    call rte_config_checks(.false.)
 
     initialized = .true.
 
