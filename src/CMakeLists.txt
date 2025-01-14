@@ -194,7 +194,7 @@ set( rrtmgp_srcs
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_source_functions.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_util_array_validation.F90
 	# RRTMGP
-	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-kernels/mo_gas_optics_rrtmgp_kernels.F90
+	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-kernels/accel/mo_gas_optics_rrtmgp_kernels.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-frontend/mo_gas_optics_rrtmgp.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-frontend/mo_cloud_optics_rrtmgp.F90
 	# Gas optics
