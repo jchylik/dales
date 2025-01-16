@@ -1033,33 +1033,12 @@ contains
       ! Surface fluxes
 
       !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swd_surf) async
+      !$acc reduction(+: s_swd_surf, s_swu_surf, s_lwd_surf, s_lwu_surf) async
       do j = 2, j1
         do i = 2, i1
           s_swd_surf = s_swd_surf + swd(i,j,1)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swu_surf) async
-      do j = 2, j1
-        do i = 2, i1
           s_swu_surf = s_swu_surf + swu(i,j,1)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_lwd_surf) async
-      do j = 2, j1
-        do i = 2, i1
           s_lwd_surf = s_lwd_surf + lwd(i,j,1)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_lwu_surf) async
-      do j = 2, j1
-        do i = 2, i1
           s_lwu_surf = s_lwu_surf + lwu(i,j,1)
         end do
       end do
@@ -1067,25 +1046,11 @@ contains
       ! Top of atmosphere fluxes
 
       !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swd_toa) async
+      !$acc reduction(+: s_swd_toa, s_swu_toa, s_lwu_toa) async
       do j = 2, j1
         do i = 2, i1
           s_swd_toa = s_swd_toa + swd(i,j,k1)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swu_toa) async
-      do j = 2, j1
-        do i = 2, i1
           s_swu_toa = s_swu_toa + swu(i,j,k1)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_lwu_toa) async
-      do j = 2, j1
-        do i = 2, i1
           s_lwu_toa = s_lwu_toa + lwu(i,j,k1)
         end do
       end do
@@ -1093,33 +1058,12 @@ contains
       ! Top of model fluxes
 
       !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swd_tom) async
+      !$acc reduction(+: s_swd_tom, s_swu_tom, s_lwd_tom, s_lwu_tom) async
       do j = 2, j1
         do i = 2, i1
           s_swd_tom = s_swd_tom + swd(i,j,kmax)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_swu_tom) async
-      do j = 2, j1
-        do i = 2, i1
           s_swu_tom = s_swu_tom + swu(i,j,kmax)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_lwd_tom) async
-      do j = 2, j1
-        do i = 2, i1
           s_lwd_tom = s_lwd_tom + lwd(i,j,kmax)
-        end do
-      end do
-
-      !$acc parallel loop gang vector collapse(2) default(present) &
-      !$acc& reduction(+: s_lwu_tom) async
-      do j = 2, j1
-        do i = 2, i1
           s_lwu_tom = s_lwu_tom + lwu(i,j,kmax)
         end do
       end do
@@ -1129,33 +1073,13 @@ contains
         ! Surface fluxes
 
         !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_swd_surf_ca) async
+        !$acc reduction(+: s_swd_surf_ca, s_swu_surf_ca, &
+        !$acc              s_lwd_surf_ca, s_lwu_surf_ca) async
         do j = 2, j1
           do i = 2, i1
             s_swd_surf_ca = s_swd_surf_ca + swdca(i,j,1)
-          end do
-        end do
-
-        !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_swu_surf_ca) async
-        do j = 2, j1
-          do i = 2, i1
             s_swu_surf_ca = s_swu_surf_ca + swuca(i,j,1)
-          end do
-        end do
-
-        !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_lwd_surf_ca) async
-        do j = 2, j1
-          do i = 2, i1
             s_lwd_surf_ca = s_lwd_surf_ca + lwdca(i,j,1)
-          end do
-        end do
-
-        !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_lwu_surf_ca) async
-        do j = 2, j1
-          do i = 2, i1
             s_lwu_surf_ca = s_lwu_surf_ca + lwuca(i,j,1)
           end do
         end do
@@ -1163,17 +1087,10 @@ contains
         ! Top of atmosphere fluxes
 
         !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_swu_toa_ca)
+        !$acc reduction(+: s_swu_toa_ca, s_lwu_toa_ca) async
         do j = 2, j1
           do i = 2, i1
             s_swu_toa_ca = s_swu_toa_ca + swuca(i,j,k1)
-          end do
-        end do
-
-        !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_lwu_toa_ca)
-        do j = 2, j1
-          do i = 2, i1
             s_lwu_toa_ca = s_lwu_toa_ca + lwuca(i,j,k1)
           end do
         end do
@@ -1181,17 +1098,10 @@ contains
         ! Top of model fluxes
 
         !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_swu_tom_ca)
+        !$acc reduction(+: s_swu_tom_ca, s_lwu_tom_ca) async
         do j = 2, j1
           do i = 2, i1
             s_swu_tom_ca = s_swu_tom_ca + swuca(i,j,kmax)
-          end do
-        end do
-
-        !$acc parallel loop gang vector collapse(2) default(present) &
-        !$acc& reduction(+: s_lwu_tom_ca)
-        do j = 2, j1
-          do i = 2, i1
             s_lwu_tom_ca = s_lwu_tom_ca + lwuca(i,j,kmax)
           end do
         end do
