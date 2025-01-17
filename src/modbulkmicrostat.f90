@@ -53,8 +53,8 @@ save
                iclip = 6
   real, allocatable, dimension(:,:)  :: Npav    , &
                Npmn    , &
-               qlpav  , &
-               qlpmn  , &
+               qrpav  , &
+               qrpmn  , &
                qtpav  , &
                qtpmn
   real, allocatable, dimension(:)    :: &
@@ -136,8 +136,8 @@ subroutine initbulkmicrostat
 
     allocate(Npav    (k1, nrfields), &
              Npmn    (k1, nrfields), &
-             qlpav   (k1, nrfields), &
-             qlpmn   (k1, nrfields), &
+             qrpav   (k1, nrfields), &
+             qrpmn   (k1, nrfields), &
              qtpav   (k1, nrfields), &
              qtpmn   (k1, nrfields))
     allocate(&
@@ -158,7 +158,7 @@ subroutine initbulkmicrostat
              Dvrav    (k1)    , &
              Dvrmn    (k1))
     Npmn    = 0.0
-    qlpmn    = 0.0
+    qrpmn    = 0.0
     qtpmn    = 0.0
     precmn    = 0.0
     preccountmn  = 0.0
@@ -176,8 +176,8 @@ subroutine initbulkmicrostat
     tend_qrp(:) = 0.0
     tend_qtp(:) = 0.0
 
-    !$acc enter data copyin(tend_np, tend_qrp, tend_qtp, Npmn, qlpmn, qtpmn,&
-    !$acc&                  Npav, qlpav, qtpav, precav, preccountav, prec_prcav, &
+    !$acc enter data copyin(tend_np, tend_qrp, tend_qtp, Npmn, qrpmn, qtpmn,&
+    !$acc&                  Npav, qrpav, qtpav, precav, preccountav, prec_prcav, &
     !$acc&                  cloudcountav, raincountav, Nrrainav, qrav, Dvrav, &
     !$acc&                  preccountmn, prec_prcmn, &
     !$acc&                  precmn, cloudcountmn, raincountmn, Nrrainmn, qrmn, Dvrmn)
@@ -389,17 +389,17 @@ subroutine initbulkmicrostat
 
     !$acc kernels default(present)
     Npav(:,ifield)  = tend_np(:)  - sum(Npav (:,1:ifield-1),2)
-    qlpav(:,ifield) = tend_qrp(:) - sum(qlpav(:,1:ifield-1),2)
+    qrpav(:,ifield) = tend_qrp(:) - sum(qrpav(:,1:ifield-1),2)
     qtpav(:,ifield) = tend_qtp(:) - sum(qtpav(:,1:ifield-1),2)
     !$acc end kernels
 
     if (ifield == nrfields) then
       !$acc kernels default(present)
       Npmn(:,:)  = Npmn(:,:)  + Npav(:,:)  / nsamples / ijtot
-      qlpmn(:,:) = qlpmn(:,:) + qlpav(:,:) / nsamples / ijtot
+      qrpmn(:,:) = qrpmn(:,:) + qrpav(:,:) / nsamples / ijtot
       qtpmn(:,:) = qtpmn(:,:) + qtpav(:,:) / nsamples / ijtot
       Npav(:,:)  = 0.0
-      qlpav(:,:) = 0.0
+      qrpav(:,:) = 0.0
       qtpav(:,:) = 0.0
       !$acc end kernels
     end if
@@ -429,7 +429,7 @@ subroutine initbulkmicrostat
     nminut    = int (nsecs/60)-nhrs*60
     nsecs    = mod (nsecs,60)
 
-    !$acc update self(Npmn, qlpmn, qtpmn, cloudcountmn, raincountmn, preccountmn,&
+    !$acc update self(Npmn, qrpmn, qtpmn, cloudcountmn, raincountmn, preccountmn,&
     !$acc&            prec_prcmn, Dvrmn, Nrrainmn, precmn, qrmn)
 
     cloudcountmn(:) = cloudcountmn(:) / nsamples
@@ -535,11 +535,11 @@ subroutine initbulkmicrostat
       (k          , &
       zf    (k)      , &
       presf    (k)/100.    , &
-      qlpmn    (k,iauto)    , &
-      qlpmn    (k,iaccr)    , &
-      qlpmn    (k,ised)    , &
-      qlpmn    (k,ievap)    , &
-      sum(qlpmn  (k,2:nrfields))    , &
+      qrpmn    (k,iauto)    , &
+      qrpmn    (k,iaccr)    , &
+      qrpmn    (k,ised)    , &
+      qrpmn    (k,ievap)    , &
+      sum(qrpmn  (k,2:nrfields))    , &
                         k=1,kmax)
     close(ifoutput)
 
@@ -587,13 +587,13 @@ subroutine initbulkmicrostat
         do k=1,k1
         vars(k,14) =sum(Npmn  (k,2:nrfields))
         enddo
-        vars(:,15) =qlpmn    (:,iauto)
-        vars(:,16) =qlpmn    (:,iaccr)
-        vars(:,17) =qlpmn    (:,ised)
-        vars(:,18) =qlpmn    (:,ievap)
-        vars(:,19) =qlpmn    (:,iclip)
+        vars(:,15) =qrpmn    (:,iauto)
+        vars(:,16) =qrpmn    (:,iaccr)
+        vars(:,17) =qrpmn    (:,ised)
+        vars(:,18) =qrpmn    (:,ievap)
+        vars(:,19) =qrpmn    (:,iclip)
         do k=1,k1
-        vars(k,20) =sum(qlpmn  (k,2:nrfields))
+        vars(k,20) =sum(qrpmn  (k,2:nrfields))
         enddo
         vars(:,21) =qtpmn    (:,iauto)
         vars(:,22) =qtpmn    (:,iaccr)
@@ -617,7 +617,7 @@ subroutine initbulkmicrostat
     precmn(:)       = 0.0
     qrmn(:)         = 0.0
     Npmn(:,:)         = 0.0
-    qlpmn(:,:)        = 0.0
+    qrpmn(:,:)        = 0.0
     qtpmn(:,:)        = 0.0
     !$acc end kernels
 
@@ -638,16 +638,16 @@ subroutine initbulkmicrostat
     
     if (.not. lmicrostat)  return
 
-    !$acc exit data delete(tend_np, tend_qrp, tend_qtp, Npmn, qlpmn, qtpmn,&
-    !$acc&                 Npav, qlpav, qtpav, precav, preccountav, prec_prcav, &
+    !$acc exit data delete(tend_np, tend_qrp, tend_qtp, Npmn, qrpmn, qtpmn,&
+    !$acc&                 Npav, qrpav, qtpav, precav, preccountav, prec_prcav, &
     !$acc&                 cloudcountav, raincountav, Nrrainav, qrav, Dvrav, &
     !$acc&                 preccountmn, prec_prcmn, &
     !$acc&                 precmn, cloudcountmn, raincountmn, Nrrainmn, qrmn, Dvrmn)
 
     deallocate(Npav     , &
                Npmn     , &
-               qlpav    , &
-               qlpmn    , &
+               qrpav    , &
+               qrpmn    , &
                qtpav    , &
                qtpmn    )
     deallocate(&
