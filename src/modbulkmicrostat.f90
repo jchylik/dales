@@ -38,18 +38,19 @@ private
 PUBLIC  :: initbulkmicrostat, bulkmicrostat, exitbulkmicrostat, bulkmicrotend
 save
 !NetCDF variables
-  integer,parameter :: nvar = 23
+  integer,parameter :: nvar = 25
   character(80),dimension(nvar,4) :: ncname
   character(80),dimension(1,4) :: tncname
   real          :: dtav, timeav
   integer(kind=longint):: idtav, itimeav, tnext, tnextwrite
   integer          :: nsamples
   logical          :: lmicrostat = .false.
-  integer, parameter      :: nrfields = 5  , &
+  integer, parameter      :: nrfields = 6  , &
                  iauto    = 2 , &
                   iaccr    = 3 , &
                ievap    = 4 , &
-               ised      = 5
+               ised      = 5, &
+               iclip = 6
   real, allocatable, dimension(:,:)  :: Npav    , &
                Npmn    , &
                qlpav  , &
@@ -212,17 +213,19 @@ subroutine initbulkmicrostat
         call ncinfo(ncname(10,:),'npaccr','Accretion rain drop tendency','#/m3/s','tt')
         call ncinfo(ncname(11,:),'npsed','Sedimentation rain drop tendency','#/m3/s','tt')
         call ncinfo(ncname(12,:),'npevap','Evaporation rain drop tendency','#/m3/s','tt')
-        call ncinfo(ncname(13,:),'nptot','Total rain drop tendency','#/m3/s','tt')
-        call ncinfo(ncname(14,:),'qrpauto','Autoconversion rain water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(15,:),'qrpaccr','Accretion rain water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(16,:),'qrpsed','Sedimentation rain water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(17,:),'qrpevap','Evaporation rain water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(18,:),'qrptot','Total rain water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(19,:),'qtpauto','Autoconversion total water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(20,:),'qtpaccr','Accretion total water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(21,:),'qtpsed','Sedimentation total water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(22,:),'qtpevap','Evaporation total water content tendency','kg/kg/s','tt')
-        call ncinfo(ncname(23,:),'qtptot','Total total water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(13,:),'npclip','Rain drop tendency due to clipping','#/m3/s','tt')
+        call ncinfo(ncname(14,:),'nptot','Total rain drop tendency','#/m3/s','tt')
+        call ncinfo(ncname(15,:),'qrpauto','Autoconversion rain water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(16,:),'qrpaccr','Accretion rain water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(17,:),'qrpsed','Sedimentation rain water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(18,:),'qrpevap','Evaporation rain water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(19,:),'qrpclip','Rain water content tendency due to clipping','kg/kg/s','tt')
+        call ncinfo(ncname(20,:),'qrptot','Total rain water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(21,:),'qtpauto','Autoconversion total water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(22,:),'qtpaccr','Accretion total water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(23,:),'qtpsed','Sedimentation total water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(24,:),'qtpevap','Evaporation total water content tendency','kg/kg/s','tt')
+        call ncinfo(ncname(25,:),'qtptot','Total total water content tendency','kg/kg/s','tt')
         call define_nc( ncid_prof, NVar, ncname)
       end if
 
@@ -580,22 +583,24 @@ subroutine initbulkmicrostat
         vars(:,10) =Npmn    (:,iaccr)
         vars(:,11) =Npmn    (:,ised)
         vars(:,12) =Npmn    (:,ievap)
+        vars(:,13) =Npmn    (:,iclip)
         do k=1,k1
-        vars(k,13) =sum(Npmn  (k,2:nrfields))
+        vars(k,14) =sum(Npmn  (k,2:nrfields))
         enddo
-        vars(:,14) =qlpmn    (:,iauto)
-        vars(:,15) =qlpmn    (:,iaccr)
-        vars(:,16) =qlpmn    (:,ised)
-        vars(:,17) =qlpmn    (:,ievap)
+        vars(:,15) =qlpmn    (:,iauto)
+        vars(:,16) =qlpmn    (:,iaccr)
+        vars(:,17) =qlpmn    (:,ised)
+        vars(:,18) =qlpmn    (:,ievap)
+        vars(:,19) =qlpmn    (:,iclip)
         do k=1,k1
-        vars(k,18) =sum(qlpmn  (k,2:nrfields))
+        vars(k,20) =sum(qlpmn  (k,2:nrfields))
         enddo
-        vars(:,19) =qtpmn    (:,iauto)
-        vars(:,20) =qtpmn    (:,iaccr)
-        vars(:,21) =qtpmn    (:,ised)
-        vars(:,22) =qtpmn    (:,ievap)
+        vars(:,21) =qtpmn    (:,iauto)
+        vars(:,22) =qtpmn    (:,iaccr)
+        vars(:,23) =qtpmn    (:,ised)
+        vars(:,24) =qtpmn    (:,ievap)
         do k=1,k1
-        vars(k,23) =sum(qtpmn  (k,2:nrfields))
+        vars(k,25) =sum(qtpmn  (k,2:nrfields))
         enddo
         call writestat_nc(ncid_prof,nvar,ncname,vars(1:kmax,:),nrec_prof,kmax)
       end if
