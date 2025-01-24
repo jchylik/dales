@@ -299,7 +299,7 @@ module modbulkmicro
     ! remove negative values and non physical low values
     !*********************************************************************
     !$acc parallel loop collapse(3) default(present) private(qr_cor, Nr_cor)
-    do k = min(qrbase, qcbase), max(qrroof, qcroof)
+    do k = 1, k1
       do j = 2, j1
         do i = 2, i1
           qr_cor = min(svp(i,j,k,iqr) + qrp(i,j,k) + (svm(i,j,k,iqr) / delt), &
