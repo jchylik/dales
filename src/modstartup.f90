@@ -211,6 +211,9 @@ contains
     call initgpu(commwrld)
 #endif
 
+    ! Ignore user-provided nsv, we take care of it ourselves
+    nsv = 0
+
   !broadcast namelists
     call D_MPI_BCAST(iexpnr     ,1,0,commwrld,mpierr) ! RUN
     call D_MPI_BCAST(lwarmstart ,1,0,commwrld,mpierr)

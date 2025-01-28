@@ -28,6 +28,7 @@ module modtracers
   use modtracer_type, only: T_tracer
   use modprecision,   only: field_r
   use modfields,      only: svm, sv0, svp, sv0av, svprof
+  use go,             only: goSplitString_s
   use modstat_nc
   use utils
 
@@ -42,7 +43,7 @@ module modtracers
   type(T_tracer), allocatable, public, protected :: tracer_prop(:) !< List of tracers
   logical,                     protected         :: ltracers = .false.
   character(6),                protected         :: &
-    tracernames(200) = (/ ('      ', iname=1, 200)/)            !< For compatibility
+    tracernames(200) = (/ ('', iname=1, 200)/)            !< For compatibility
 
   logical :: file_exists
 
@@ -53,16 +54,6 @@ module modtracers
   public :: tracer_profs_from_netcdf
 
   ! Old stuff, to be removed at some point
-  integer, parameter:: max_tracs  =  31 !<  Max. number of tracers that can be defined
-  character(len=10),dimension(max_tracs) :: tracname_short = "NA" ! Short tracer name
-  character(len=32),dimension(max_tracs) :: tracname_long  = "NA" ! Long tracer name
-  character(len=10),dimension(max_tracs) :: tracer_unit = "NA" ! Unit of tracer
-  real(field_r)     :: molar_mass(max_tracs)       = -1.0 ! Molar mass of tracer (g mol-1)
-  logical  :: tracer_is_emitted(max_tracs) = .false. ! Tracer is emitted (T/F)
-  logical  :: tracer_is_reactive(max_tracs) = .false. ! Tracer is reactive (T/F)
-  logical  :: tracer_is_deposited(max_tracs) = .false. ! Tracer is deposited (T/F)
-  logical  :: tracer_is_photosynth(max_tracs) = .false. ! Tracer is photosynthesized (T/F)
-  logical  :: tracer_is_microphys(max_tracs) = .false. ! Tracer is involved in cloud microphysics (T/F)
 
 contains
 
@@ -80,7 +71,7 @@ contains
     implicit none
 
     ! Auxiliary variables
-    integer  :: ierr
+    integer :: ierr
 
     ! Namelist definition
     namelist /NAMTRACERS/ &
@@ -95,23 +86,13 @@ contains
         close(ifnamopt)
     end if
 
-    nsv = 0
 
     ! Broadcast namelist values to all MPI tasks
     call d_mpi_bcast(ltracers,             1, 0, comm3d, ierr)
     call d_mpi_bcast(tracernames(1:200), 200, 0, comm3d, ierr)
 
     if (ltracers) then
-      call read_tracer_props
-
-      allocate(tracer_prop(nsv), stat=ierr)
-      if (ierr/=0) stop
-
-      call assign_tracer_props
-
-      ! do isv = 1, nsv
-      !   write(6,"(A17, A6)") "species: ", trim(tracer_prop(isv) % tracname)
-      ! enddo
+      call tracer_props_from_ascii('scalar.inp.'//cexpnr, 'tracerdata.inp')
     else
       call tracer_props_from_netcdf('tracers.'//cexpnr//'.nc')
     end if ! ltracers
@@ -226,79 +207,114 @@ contains
 
   end subroutine exittracers
 
-  !> DEPRECATED
+  !> \brief Setup tracers from ASCII input files
   !!
-  !! For reading "old" tracerdata.inp files.
-  subroutine read_tracer_props
+  !! \param file_profiles Name of file containing profiles of tracers. From 
+  !! this file, the number of tracers is determined.
+  !! \param file_properties Name of file containing tracer attributes.
+  subroutine tracer_props_from_ascii(file_profiles, file_properties)
+    character(len=*), intent(in) :: file_profiles
+    character(len=*), intent(in) :: file_properties
 
-    use modglobal,  only : ifinput
-    use modmpi,     only : myid
+    integer, parameter :: max_tracs  =  100 !<  Max. number of tracers that can be defined
 
-    implicit none
+    character(len=512) :: line
+    character(len=7)   :: headers(max_tracs)
+    integer            :: ierr
+    integer            :: nheader
+    integer            :: isv, n
 
-    integer   :: tdx, ierr
-    character(len=1500) :: readbuffer
+    ! Buffers for tracer properties
+    character(len=10) :: tracname_short(max_tracs) = "NA" ! Short tracer name
+    character(len=32) :: tracname_long(max_tracs)  = "NA" ! Long tracer name
+    character(len=10) :: tracer_unit(max_tracs) = "NA" ! Unit of tracer
+    real(field_r)     :: molar_mass(max_tracs) = -1.0 ! Molar mass of tracer (g mol-1)
+    logical           :: tracer_is_emitted(max_tracs) = .false. ! Tracer is emitted (T/F)
+    logical           :: tracer_is_reactive(max_tracs) = .false. ! Tracer is reactive (T/F)
+    logical           :: tracer_is_deposited(max_tracs) = .false. ! Tracer is deposited (T/F)
+    logical           :: tracer_is_photosynth(max_tracs) = .false. ! Tracer is photosynthesized (T/F)
+    logical           :: tracer_is_microphys(max_tracs) = .false. ! Tracer is involved in cloud microphysics (T/F)
 
-    tdx = nsv
+    open(1, file=file_profiles, status='old', iostat=ierr)
 
-    open (ifinput,file='tracerdata.inp')
+    if (ierr /= 0) then
+      if (myid == 0) write(6,*) "Error opening ", trim(file_profiles) ! DALESERROR
+      error stop
+    end if
+
+    read(1, '(a512)') line
+    read(1, '(a512)') line
+
+    ! Determine the number of tracers from the header
+    call goSplitString_s(line, nheader, headers, ierr, sep=' ')
+
+    close(1)
+
+    ! Read table of tracer properties, and put into the respective buffers
+    open(1, file=file_properties, status='old', iostat=ierr)
+
+    if (ierr /= 0) then
+      if (myid == 0) write(6,*) "Error opening ", trim(file_properties) ! DALESERROR
+      error stop
+    end if
+
     ierr = 0
+    isv = 0
     do while (ierr == 0)
-      read(ifinput, '(A)', iostat=ierr) readbuffer
+      read(1, '(A)', iostat=ierr) line
 
-      if (ierr == 0) then   !So no end of file is encountered
-        if (readbuffer(1:1)=='#') then
-          if (myid == 0)   print *, trim(readbuffer)
+      if (ierr == 0) then ! So no end of file is encountered
+        if (line(1:1)=='#') then
+          if (myid == 0)   print *, trim(line)
         else
-          if (myid == 0)   print *, trim(readbuffer)
-          tdx = tdx + 1
-          read(readbuffer, *, iostat=ierr) tracname_short(tdx), tracname_long(tdx), tracer_unit(tdx), molar_mass(tdx), &
-                                           tracer_is_emitted(tdx), tracer_is_reactive(tdx), tracer_is_deposited(tdx), &
-                                           tracer_is_photosynth(tdx), tracer_is_microphys(tdx)
+          if (myid == 0)   print *, trim(line)
+          isv = isv + 1
+          read(line, *, iostat=ierr) tracname_short(isv), &
+                                     tracname_long(isv), &
+                                     tracer_unit(isv), &
+                                     molar_mass(isv), &
+                                     tracer_is_emitted(isv), &
+                                     tracer_is_reactive(isv), &
+                                     tracer_is_deposited(isv), &
+                                     tracer_is_photosynth(isv), &
+                                     tracer_is_microphys(isv)
 
-          if ( (molar_mass(tdx) .lt. 0) .and. (molar_mass(tdx) .gt. -1.1) ) then
-            if (myid == 0) stop "MODTRACERS: a molar mass value is not set in the tracer input file"
+          if ( (molar_mass(isv) < 0) .and. (molar_mass(isv) > -1.1) ) then
+            if (myid == 0) then
+              stop "MODTRACERS: a molar mass value is not set in the tracer &
+                &input file"
+            end if
           end if
-        endif
-      endif
-    enddo
+        end if
+      end if
+    end do
 
-    close(ifinput)
+    close(1)
 
-  end subroutine read_tracer_props
-
-
-  !! For each tracer in 'tracernames', get the properties as defined in 'tracerdata.inp' and
-  !! read by 'read_tracer_props'
-  !! Fill the 'tracer_prop' data structure with these properties
-  subroutine assign_tracer_props
-    !!! ! use modtracdata ! arrays with tracer properties
-
-    integer :: isv
-
-    do isv=1,nsv
+    ! For every tracer, find the properties
+    do n = 2, nheader ! Skip the first column, containing the heights
       call add_tracer( &
-        name=trim(tracernames(isv)), &
-        long_name=trim(findval(tracernames(isv), tracname_short, &
-                                         tracname_long, defltvalue='dummy longname')), & ! Default is 'dummy '
-        unit=trim(findval(tracernames(isv), tracname_short, &
+        name=trim(headers(n)), &
+        long_name=trim(findval(headers(n), tracname_short, tracname_long, &
+                               defltvalue='dummy longname')), & ! Default is 'dummy '
+        unit=trim(findval(headers(n), tracname_short, &
                     tracer_unit, defltvalue='dummy unit')), & ! Default is 'dummy unit'
-        molar_mass=findval(tracernames(isv), tracname_short, &
+        molar_mass=findval(headers(n), tracname_short, &
                      molar_mass, defltvalue=-999._field_r), & ! Default is -999.
-        lemis=findval(tracernames(isv), tracname_short, &
+        lemis=findval(headers(n), tracname_short, &
                 tracer_is_emitted, defltvalue=.false.), & ! Default is False
-        lreact=findval(tracernames(isv), tracname_short, &
+        lreact=findval(headers(n), tracname_short, &
                  tracer_is_reactive, defltvalue=.false.), & ! Default is False
-        ldep=findval(tracernames(isv), tracname_short, &
+        ldep=findval(headers(n), tracname_short, &
                tracer_is_deposited, defltvalue=.false.), & ! Default is False
-        lags=findval(tracernames(isv), tracname_short, &
+        lags=findval(headers(n), tracname_short, &
                tracer_is_photosynth, defltvalue=.false.), & ! Default is False
-        lmicro=findval(tracernames(isv), tracname_short, &
+        lmicro=findval(headers(n), tracname_short, &
                  tracer_is_microphys, defltvalue=.false.) & ! Default is False
       )
     end do
-
-  end subroutine assign_tracer_props
+    
+  end subroutine tracer_props_from_ascii
 
   !> \brief Read tracer properties from tracers.XXX.nc
   !!
