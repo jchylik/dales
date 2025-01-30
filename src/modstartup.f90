@@ -672,32 +672,10 @@ contains
           ! reading header (2 lines)
           read (ifinput,'(a512)') chmess
           read (ifinput,'(a512)') chmess
-          call goSplitString_s( chmess, nheader, headers, status, sep=' ')
-          ! check if nheader equals the number of tracers in simulation (skipping first header item "#z")
-          if (nheader-1 /= nsv) then
-            write(6,"(A58, i3, A3, i3)") "STOPPED. Number of tracers in scalar.inp differs from nsv:  ", nheader-1, " /=", nsv
-            stop
-          end if
 
-          do isv=1,nsv
-            found = .false.
-            do ifield = 1, nheader
-              ! current
-              header = headers(ifield)
-              ! write(*,*) 'header: ', ifield, header
-                if (trim(to_lower(header)) == tracer_prop(isv)%tracname) then
-                  found = .true.
-                  write(6,*) 'found tracer in scalar.inp: ', tracer_prop(isv)%tracname
-                  scalar_indices(isv) = ifield -1
-                  continue
-                endif
-            enddo
-            if (.not. found) then
-              write(6,*) 'tracer not found in scalar.inp: ', tracer_prop(isv)%tracname
-              !stop
-            endif
-          enddo
-          ! write(*,*) 'scalar_indices: ', scalar_indices
+          do k = 1, kmax
+            read(ifinput, *) height(k), (svprof(k,n), n = 1, nsv)
+          end do
 
           close(ifinput)
 
