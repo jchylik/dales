@@ -38,6 +38,12 @@ module modtracers
 
   save
 
+  public :: inittracers
+  public :: add_tracer
+  public :: allocate_tracers
+  public :: exittracers
+  public :: tracer_profs_from_netcdf
+
   integer :: iname
 
   type(T_tracer), allocatable, public, protected :: tracer_prop(:) !< List of tracers
@@ -46,14 +52,6 @@ module modtracers
     tracernames(200) = (/ ('', iname=1, 200)/)            !< For compatibility
 
   logical :: file_exists
-
-  public :: inittracers
-  public :: add_tracer
-  public :: allocate_tracers
-  public :: exittracers
-  public :: tracer_profs_from_netcdf
-
-  ! Old stuff, to be removed at some point
 
 contains
 
