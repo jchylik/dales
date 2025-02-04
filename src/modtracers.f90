@@ -61,41 +61,17 @@ contains
   !! Read the namelist NAMTRACERS from the namoptions file, distribute
   !! the parameters to all processes and allocate the tracer (SV) arrays.
   subroutine inittracers
-    ! read namelist
-    ! init tracer type
+    use modglobal, only: cexpnr
+    use modmpi,    only: myid, comm3d, d_mpi_bcast
 
-    use modglobal,        only : ifnamopt, fname_options, checknamelisterror
-    use modmpi,           only : myid, comm3d, d_mpi_bcast
-
-    implicit none
-
-    ! Auxiliary variables
-    integer :: ierr
-
-    ! Namelist definition
-    namelist /NAMTRACERS/ &
-        ltracers, tracernames
-
-    ! Read namelist
-    if (myid == 0) then
-        open(ifnamopt, file=fname_options, status='old', iostat=ierr)
-        read(ifnamopt, NAMTRACERS, iostat=ierr)
-        call checknamelisterror(ierr, ifnamopt, 'NAMTRACERS')
-        write(6, NAMTRACERS)
-        close(ifnamopt)
-    end if
-
-
-    ! Broadcast namelist values to all MPI tasks
-    call d_mpi_bcast(ltracers,             1, 0, comm3d, ierr)
-    call d_mpi_bcast(tracernames(1:200), 200, 0, comm3d, ierr)
+    ! temporary
+    inquire(file='scalar.inp.'//cexpnr, exist=ltracers)
 
     if (ltracers) then
       call tracer_props_from_ascii('scalar.inp.'//cexpnr, 'tracerdata.inp')
     else
       call tracer_props_from_netcdf('tracers.'//cexpnr//'.nc')
     end if ! ltracers
-
 
   end subroutine inittracers
 
