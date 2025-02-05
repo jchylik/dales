@@ -45,6 +45,8 @@ module modtracers
   public :: exittracers
   public :: tracer_profs_from_netcdf
 
+  public :: nsv_user
+
   type T_tracer
     character(len=16) :: tracname           !< Tracer name
     character(len=64) :: traclong           !< Tracer long name
@@ -59,7 +61,7 @@ module modtracers
   end type T_tracer
 
   integer :: iname
-  integer :: nsv_user !< Number of user-provided tracers
+  integer, protected :: nsv_user !< Number of user-provided tracers
 
   type(T_tracer), allocatable, public, protected :: tracer_prop(:) !< List of tracers
   logical,                     protected         :: ltracers = .false.
@@ -267,7 +269,9 @@ contains
     read(1, '(a512)') line
 
     ! Determine the number of tracers from the header
-    call goSplitString_s(line, nsv_user, headers, ierr, sep=' ')
+    call goSplitString_s(line, nheader, headers, ierr, sep=' ')
+
+    nsv_user = nheader - 1
 
     close(1)
 
@@ -305,7 +309,7 @@ contains
     close(1)
 
     ! For every tracer, find the properties
-    do n = 2, nsv_user ! Skip the first column, containing the heights
+    do n = 2, nheader ! Skip the first column, containing the heights
       call add_tracer( &
         name=trim(headers(n)), &
         long_name=trim(findval(headers(n), tracname_short, tracname_long, &

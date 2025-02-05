@@ -38,6 +38,7 @@ use modstat_nc
 implicit none
 ! private
 ! public :: startup, writerestartfiles,trestart
+  character(len=*), parameter :: modname = "modstartup"
 save
 
   integer (KIND=selected_int_kind(6)) :: irandom= 0     !    * number to seed the randomnizer with
@@ -538,22 +539,24 @@ contains
     use modsurface,        only : surface,qtsurf,dthldz,ps
     use modlsm,            only : init_lsm_tiles
     use modboundary,       only : boundary
-    use modmpi,            only : slabsum,myid,comm3d,mpierr,D_MPI_BCAST
+    use modmpi,            only : slabsum,myid,comm3d,mpierr,D_MPI_BCAST, print_info_stderr
     use modthermodynamics, only : thermodynamics,calc_halflev
     use moduser,           only : initsurf_user
 
     use modtestbed,        only : ltestbed,tb_ps,tb_thl,tb_qt,tb_u,tb_v,tb_w,tb_ug,tb_vg,&
                                   tb_dqtdxls,tb_dqtdyls,tb_qtadv,tb_thladv
     use modopenboundary,   only : openboundary_ghost,openboundary_readboundary,openboundary_initfields
-    use modtracers,        only : tracer_prop, tracer_profs_from_netcdf
+    use modtracers,        only : tracer_prop, tracer_profs_from_netcdf, nsv_user
     use go,                only : goSplitString_s
     use utils,             only : to_lower
 #if defined(_OPENACC)
     use modgpu, only: update_gpu, update_host, host_is_updated, update_gpu_surface
 #endif
 
+    character(len=*), parameter :: routine = modname//"::readinitfiles"
+
     integer i,j,k,n,ierr
-    integer isv
+    integer isv, isv_u
     logical negval !switch to allow or not negative values in randomnization
 
     real(field_r), allocatable :: height(:), th0av(:)
@@ -561,12 +564,10 @@ contains
     integer, allocatable :: scalar_indices(:)
 
     character(len=512) :: chmess
-    integer            :: status, nheader, ifield
     integer, parameter :: maxcol = 50
     character(len=6)   :: headers(maxcol)
-    !character(len=1)   :: sep
-    character(len=6)   ::  header
     logical            :: found
+    real               :: vals_at_lev(nsv_user)
 
     allocate (height(k1))
     allocate (th0av(k1))
@@ -672,18 +673,41 @@ contains
           read (ifinput,'(a512)') chmess
           read (ifinput,'(a512)') chmess
 
-          do k = 1, kmax
-            read(ifinput, *) height(k), (svprof(k,n), n = 1, nsv)
+          ! Try to find profiles
+          do isv = 1, nsv
+            found = .false.
+            do isv_u = 1, nsv_user
+              if (trim(tracer_prop(isv)%tracname) == trim(headers(isv_u))) then
+                do k = 1, kmax
+                  read(ifinput, *, iostat=ierr) height(k), vals_at_lev(:)
+                  svprof(k,isv) = vals_at_lev(isv_u)
+                end do
+                found = .true.
+              end if
+            end do
+
+            if (.not. found) then
+              call print_info_stderr(routine, "no initial profile found for &
+                & "//tracer_prop(isv)%tracname)
+            end if
           end do
 
           close(ifinput)
 
-          write (6,*) 'height   sv(1) --------- sv(nsv) '
+          ! Print tracer profiles to stderr
+          write(0, '(a9)', advance='no') 'height   '
+          do isv = 1, nsv
+            write(0, '(a12)', advance='no') tracer_prop(isv)%tracname
+          end do
+
+          write(0, *)
 
           do k = kmax, 1, -1
-            write (6,*) &
-                  height (k), &
-                (svprof (k,n),n=1,nsv)
+            write(0,'(f7.1,2x)', advance='no') height(k)
+            do isv = 1, nsv
+              write(0, '(e10.4,2x)', advance='no') svprof(k,isv)
+            end do
+            write(0, *)
           end do
 
         end if
