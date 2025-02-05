@@ -27,6 +27,7 @@ module modtracers
   use modglobal,      only: nsv, i1, ih, j1, jh, k1, kmax, cexpnr
   use modprecision,   only: field_r
   use modfields,      only: svm, sv0, svp, sv0av, svprof
+  use modmpi,         only: myid, comm3d, d_mpi_bcast, print_info_stderr
   use go,             only: goSplitString_s
   use modstat_nc
   use utils
@@ -37,6 +38,7 @@ module modtracers
 
   save
 
+  character(len=*), parameter :: modname = "modtracers"
   public :: inittracers
   public :: add_tracer
   public :: allocate_tracers
@@ -112,15 +114,18 @@ contains
     logical,       intent(in),  optional :: lags
     logical,       intent(in),  optional :: lmicro
     integer,       intent(out), optional :: isv
+    character(len=*), parameter :: routine = modname//"::add_tracer"
 
     integer                     :: s
+    character(len=1024)         :: message = ''
     type(T_tracer), allocatable :: tmp(:)
 
     ! Check if the tracer already exists. If so, don't add a new one.
     if (nsv > 0) then
       do s = 1, nsv
         if (trim(to_lower(name)) == trim(to_lower(tracer_prop(s) % tracname))) then
-          write(*,*) "Tracer", name, "already exists!"
+          write(message, '(a,a,a)') "tracer ", trim(name), " already defined"
+          call print_info_stderr(routine, message)
           if(present(isv)) isv = s
           return
         end if
@@ -154,12 +159,32 @@ contains
 
   !> Allocates all tracer fields
   subroutine allocate_tracers
+    integer        :: isv
+    type(T_tracer) :: tracer
 
-    integer :: s
+    ! At this point, all tracers should be defined.
 
-    do s = 1, nsv
-      call tracer_prop(s) % print_properties()
-    end do
+    ! Print tracer properties
+    if (myid == 0) then
+      write(6, '(a17,a17,a7,a9,a10,a11)') &
+        "Tracer           ", &
+        "Unit             ", &
+        "Index  ", &
+        "Emitted  ", &
+        "Reactive  ", &
+        "Deposited  "
+      write(6, '(a)') repeat("-", 70)
+      do isv = 1, nsv
+        tracer = tracer_prop(isv)
+        write(6, '(a,x,a,x,i3,4x,l3,6x,l3,7x,l3,8x)'), & ! Ugh
+          tracer%tracname, &
+          tracer%unit, &
+          tracer%trac_idx, &
+          tracer%lemis, &
+          tracer%lreact, &
+          tracer%ldep
+      end do
+    end if
 
     allocate(svm(2-ih:i1+ih,2-jh:j1+jh,k1,nsv), &
              sv0(2-ih:i1+ih,2-jh:j1+jh,k1,nsv), &
@@ -203,7 +228,9 @@ contains
     character(len=*), intent(in) :: file_profiles
     character(len=*), intent(in) :: file_properties
 
-    integer, parameter :: max_tracs  =  100 !<  Max. number of tracers that can be defined
+    character(len=*), parameter :: routine = &
+      modname//"::tracer_props_from_ascii"
+    integer,          parameter :: max_tracs = 100 !<  Max. number of tracers that can be defined
 
     character(len=512) :: line
     character(len=7)   :: headers(max_tracs)
@@ -225,7 +252,7 @@ contains
     open(1, file=file_profiles, status='old', iostat=ierr)
 
     if (ierr /= 0) then
-      if (myid == 0) write(6,*) "Error opening ", trim(file_profiles) ! DALESERROR
+      call print_info_stderr(routine, "Error opening "//trim(file_profiles))
       error stop
     end if
 
@@ -241,7 +268,7 @@ contains
     open(1, file=file_properties, status='old', iostat=ierr)
 
     if (ierr /= 0) then
-      if (myid == 0) write(6,*) "Error opening ", trim(file_properties) ! DALESERROR
+      call print_info_stderr(routine, "Error opening "//trim(file_properties))
       error stop
     end if
 
@@ -252,9 +279,8 @@ contains
 
       if (ierr == 0) then ! So no end of file is encountered
         if (line(1:1)=='#') then
-          if (myid == 0)   print *, trim(line)
+          cycle
         else
-          if (myid == 0)   print *, trim(line)
           isv = isv + 1
           read(line, *, iostat=ierr) tracname_short(isv), &
                                      tracname_long(isv), &
@@ -265,13 +291,6 @@ contains
                                      tracer_is_deposited(isv), &
                                      tracer_is_photosynth(isv), &
                                      tracer_is_microphys(isv)
-
-          if ( (molar_mass(isv) < 0) .and. (molar_mass(isv) > -1.1) ) then
-            if (myid == 0) then
-              stop "MODTRACERS: a molar mass value is not set in the tracer &
-                &input file"
-            end if
-          end if
         end if
       end if
     end do
