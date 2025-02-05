@@ -144,7 +144,14 @@ contains
 
     tracer_prop(nsv) % tracname = name
     tracer_prop(nsv) % trac_idx = nsv
-    if (present(long_name)) tracer_prop(nsv) % traclong = trim(long_name)
+
+    ! Long name. Use short name if not provided
+    if (present(long_name)) then
+      tracer_prop(nsv) % traclong = trim(long_name)
+    else
+      tracer_prop(nsv) % traclong = name
+    end if
+
     if (present(unit)) tracer_prop(nsv) % unit = unit
     if (present(molar_mass)) tracer_prop(nsv) % molar_mass = molar_mass
     if (present(lemis)) tracer_prop(nsv) % lemis = lemis
