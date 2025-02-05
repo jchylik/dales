@@ -34,7 +34,6 @@ use iso_c_binding
 use modprecision,      only : field_r
 use modtimer
 use modstat_nc
-use modtracer_type, only: T_tracer
 
 implicit none
 ! private

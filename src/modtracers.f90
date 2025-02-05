@@ -25,7 +25,6 @@
 module modtracers
 
   use modglobal,      only: nsv, i1, ih, j1, jh, k1, kmax, cexpnr
-  use modtracer_type, only: T_tracer
   use modprecision,   only: field_r
   use modfields,      only: svm, sv0, svp, sv0av, svprof
   use go,             only: goSplitString_s
@@ -43,6 +42,19 @@ module modtracers
   public :: allocate_tracers
   public :: exittracers
   public :: tracer_profs_from_netcdf
+
+  type T_tracer
+    character(len=16) :: tracname           !< Tracer name
+    character(len=64) :: traclong           !< Tracer long name
+    character(len=16) :: unit = "-"         !< Tracer unit
+    real(field_r)     :: molar_mass = -999. !< Moleculare mass of tracer (g mol-1)
+    integer           :: trac_idx = 1       !< Tracer index in sv0, svm, svp
+    logical           :: lemis = .false.    !< Boolean if tracer is emitted 
+    logical           :: lreact = .false.   !< Boolean if tracer is reactive
+    logical           :: ldep = .false.     !< Boolean if tracer is deposited
+    logical           :: lags = .false.     !< Boolean if in A-gs
+    logical           :: lmicro = .false.   !< Boolean if in cloud microphysics
+  end type T_tracer
 
   integer :: iname
   integer :: nsv_user !< Number of user-provided tracers
