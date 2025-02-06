@@ -610,7 +610,7 @@ contains
                                 thlprof, qtprof, e12prof, ug, vg, wfls, &
                                 dqtdxls, dqtdyls, dqtdtls, thlpcar, kmax)
           call tracer_profs_from_netcdf('tracers.'//cexpnr//'.nc', &
-                                        tracer_prop, nsv, svprof(1:kmax,:))
+                                        tracer_prop, svprof(1:kmax,:))
         else
           open (ifinput,file='prof.inp.'//cexpnr,status='old',iostat=ierr)
           if (ierr /= 0) then

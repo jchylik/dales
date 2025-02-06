@@ -39,20 +39,22 @@ module modtracers
 
   save
 
-  character(len=*), parameter :: modname = "modtracers"
+  character(len=*), parameter :: modname = 'modtracers'
+
   public :: inittracers
   public :: add_tracer
   public :: allocate_tracers
   public :: exittracers
   public :: tracer_profs_from_netcdf
 
+  public :: tracer_prop
   public :: nsv_user
 
   type T_tracer
     character(len=16) :: tracname           !< Tracer name
     character(len=64) :: traclong           !< Tracer long name
-    character(len=16) :: unit = "-"         !< Tracer unit
-    real(field_r)     :: molar_mass = -999. !< Moleculare mass of tracer (g mol-1)
+    character(len=16) :: unit = '-'         !< Tracer unit
+    real(field_r)     :: molar_mass = -999. !< Molecular mass of tracer (g mol-1)
     integer           :: trac_idx = 1       !< Tracer index in sv0, svm, svp
     logical           :: lemis = .false.    !< Boolean if tracer is emitted 
     logical           :: lreact = .false.   !< Boolean if tracer is reactive
@@ -61,26 +63,15 @@ module modtracers
     logical           :: lmicro = .false.   !< Boolean if in cloud microphysics
   end type T_tracer
 
-  integer :: iname
   integer, protected :: nsv_user !< Number of user-provided tracers
 
-  type(T_tracer), allocatable, public, protected :: tracer_prop(:) !< List of tracers
-  logical,                     protected         :: ltracers = .false.
-  character(6),                protected         :: &
-    tracernames(200) = (/ ('', iname=1, 200)/)            !< For compatibility
-
-  logical :: file_exists
+  type(T_tracer), allocatable, protected :: tracer_prop(:) !< List of tracers
 
 contains
 
   !> Initialize tracer definition.
-  !!
-  !! Read the namelist NAMTRACERS from the namoptions file, distribute
-  !! the parameters to all processes and allocate the tracer (SV) arrays.
   subroutine inittracers
-    use modglobal, only: cexpnr
-    use modmpi,    only: myid, comm3d, d_mpi_bcast
-    character(len=*), parameter :: routine = modname//"::inittracers"
+    character(len=*), parameter :: routine = modname//'::inittracers'
 
     character(len=128) :: file_profs
     logical            :: file_exists
@@ -88,9 +79,9 @@ contains
     ! First, make sure that the tracer input file exists before calling
     ! tracer_props_from_xxx
     if (iinput == input_ascii) then
-      file_profs = "scalar.inp."//cexpnr
+      file_profs = 'scalar.inp.'//cexpnr
     else
-      file_profs = "tracers."//cexpnr//".nc"
+      file_profs = 'tracers.'//cexpnr//'.nc'
     end if
 
     inquire(file=file_profs, exist=file_exists)
@@ -102,7 +93,7 @@ contains
         call tracer_props_from_netcdf(file_profs)
       end if
     else
-      call print_info_stderr(routine, trim(file_profs)//" not found")
+      call print_info_stderr(routine, trim(file_profs)//' not found')
     end if
 
   end subroutine inittracers
@@ -122,17 +113,18 @@ contains
   !! \note All tracers should be added before readinitfiles is called!
   subroutine add_tracer(name, long_name, unit, molar_mass, lemis, lreact, &
                         ldep, lags, lmicro, isv)
-    character(*),  intent(in)            :: name
-    character(*),  intent(in),  optional :: long_name
-    character(*),  intent(in),  optional :: unit
-    real(field_r), intent(in),  optional :: molar_mass
-    logical,       intent(in),  optional :: lemis
-    logical,       intent(in),  optional :: lreact
-    logical,       intent(in),  optional :: ldep
-    logical,       intent(in),  optional :: lags
-    logical,       intent(in),  optional :: lmicro
-    integer,       intent(out), optional :: isv
-    character(len=*), parameter :: routine = modname//"::add_tracer"
+    character(len=*), intent(in)            :: name
+    character(len=*), intent(in),  optional :: long_name
+    character(len=*), intent(in),  optional :: unit
+    real(field_r),    intent(in),  optional :: molar_mass
+    logical,          intent(in),  optional :: lemis
+    logical,          intent(in),  optional :: lreact
+    logical,          intent(in),  optional :: ldep
+    logical,          intent(in),  optional :: lags
+    logical,          intent(in),  optional :: lmicro
+    integer,          intent(out), optional :: isv
+
+    character(len=*), parameter :: routine = modname//'::add_tracer'
 
     integer                     :: s
     character(len=1024)         :: message = ''
@@ -141,8 +133,9 @@ contains
     ! Check if the tracer already exists. If so, don't add a new one.
     if (nsv > 0) then
       do s = 1, nsv
-        if (trim(to_lower(name)) == trim(to_lower(tracer_prop(s) % tracname))) then
-          write(message, '(a,a,a)') "tracer ", trim(name), " already defined"
+        if (trim(to_lower(name)) == &
+            trim(to_lower(tracer_prop(s) % tracname))) then
+          write(message, '(a,a,a)') 'tracer ', trim(name), ' already defined'
           call print_info_stderr(routine, message)
           if(present(isv)) isv = s
           return
@@ -152,6 +145,7 @@ contains
 
     nsv = nsv + 1
 
+    ! Expand the list
     if (.not. allocated(tracer_prop)) then
       allocate(tracer_prop(nsv))
     else
@@ -192,13 +186,13 @@ contains
     ! Print tracer properties
     if (myid == 0) then
       write(6, '(a17,a17,a7,a9,a10,a11)') &
-        "Tracer           ", &
-        "Unit             ", &
-        "Index  ", &
-        "Emitted  ", &
-        "Reactive  ", &
-        "Deposited  "
-      write(6, '(a)') repeat("-", 70)
+        'Tracer           ', &
+        'Unit             ', &
+        'Index  ', &
+        'Emitted  ', &
+        'Reactive  ', &
+        'Deposited  '
+      write(6, '(a)') repeat('-', 70)
       do isv = 1, nsv
         tracer = tracer_prop(isv)
         write(6, '(a,x,a,x,i3,4x,l3,6x,l3,7x,l3,8x)'), & ! Ugh
@@ -254,8 +248,8 @@ contains
     character(len=*), intent(in) :: file_properties
 
     character(len=*), parameter :: routine = &
-      modname//"::tracer_props_from_ascii"
-    integer,          parameter :: max_tracs = 100 !<  Max. number of tracers that can be defined
+      modname//'::tracer_props_from_ascii'
+    integer,          parameter :: max_tracs = 100 !< Max. number of tracers that can be defined
 
     character(len=512) :: line
     character(len=7)   :: headers(max_tracs)
@@ -264,20 +258,20 @@ contains
     integer            :: isv, n
 
     ! Buffers for tracer properties
-    character(len=10) :: tracname_short(max_tracs) = "NA" ! Short tracer name
-    character(len=32) :: tracname_long(max_tracs)  = "NA" ! Long tracer name
-    character(len=10) :: tracer_unit(max_tracs) = "NA" ! Unit of tracer
-    real(field_r)     :: molar_mass(max_tracs) = -1.0 ! Molar mass of tracer (g mol-1)
-    logical           :: tracer_is_emitted(max_tracs) = .false. ! Tracer is emitted (T/F)
-    logical           :: tracer_is_reactive(max_tracs) = .false. ! Tracer is reactive (T/F)
-    logical           :: tracer_is_deposited(max_tracs) = .false. ! Tracer is deposited (T/F)
-    logical           :: tracer_is_photosynth(max_tracs) = .false. ! Tracer is photosynthesized (T/F)
-    logical           :: tracer_is_microphys(max_tracs) = .false. ! Tracer is involved in cloud microphysics (T/F)
+    character(len=10) :: tracname_short(max_tracs) = 'NA'
+    character(len=32) :: tracname_long(max_tracs)  = 'NA'
+    character(len=10) :: tracer_unit(max_tracs) = 'NA'
+    real(field_r)     :: molar_mass(max_tracs) = -1.0
+    logical           :: tracer_is_emitted(max_tracs) = .false.
+    logical           :: tracer_is_reactive(max_tracs) = .false.
+    logical           :: tracer_is_deposited(max_tracs) = .false.
+    logical           :: tracer_is_photosynth(max_tracs) = .false.
+    logical           :: tracer_is_microphys(max_tracs) = .false.
 
     open(1, file=file_profiles, status='old', iostat=ierr)
 
     if (ierr /= 0) then
-      call print_info_stderr(routine, "Error opening "//trim(file_profiles))
+      call print_info_stderr(routine, 'Error opening '//trim(file_profiles))
       error stop
     end if
 
@@ -295,7 +289,7 @@ contains
     open(1, file=file_properties, status='old', iostat=ierr)
 
     if (ierr /= 0) then
-      call print_info_stderr(routine, "Error opening "//trim(file_properties))
+      call print_info_stderr(routine, 'Error opening '//trim(file_properties))
       error stop
     end if
 
@@ -353,19 +347,21 @@ contains
   !!
   !! \param filename Name of the input file.
   subroutine tracer_props_from_netcdf(filename)
-    character(*),  intent(in)  :: filename
+    character(len=*), intent(in)  :: filename
 
-    integer              :: ncid, nvars
-    integer              :: ivar
+    character(len=*), parameter :: routine = &
+      modname//'::tracer_props_from_netcdf'
+
+    integer              :: ncid, nvars, ivar
+    logical              :: file_exists
     integer, allocatable :: varids(:)
 
     ! Tracer attributes
-    character(NF90_MAX_NAME) :: name
-    character(32) :: long_name
-    character(16) :: unit
-    real(field_r) :: molar_mass
-    logical       :: lemis, lreact, ldep, lags
-
+    character(len=NF90_MAX_NAME) :: name
+    character(len=32)            :: long_name
+    character(len=16)            :: unit
+    real(field_r)                :: molar_mass
+    logical                      :: lemis, lreact, ldep, lags
 
     call nchandle_error(nf90_open(filename, NF90_NOWRITE, ncid))
     call nchandle_error(nf90_inquire(ncid, nVariables=nvars))
@@ -378,13 +374,17 @@ contains
       call nchandle_error(nf90_inquire_variable(ncid, varids(ivar), name=name))
 
       ! Read attributes
-      call read_nc_attribute(ncid, varids(ivar), "long_name", long_name, default="dummy")
-      call read_nc_attribute(ncid, varids(ivar), "unit", unit, default="---")
-      call read_nc_attribute(ncid, varids(ivar), "molar_mass", molar_mass, default=-999._field_r)
-      call read_nc_attribute(ncid, varids(ivar), "lemis", lemis, default=.false.)
-      call read_nc_attribute(ncid, varids(ivar), "lreact", lreact, default=.false.)
-      call read_nc_attribute(ncid, varids(ivar), "ldep", ldep, default=.false.)
-      call read_nc_attribute(ncid, varids(ivar), "lags", lags, default=.false.)
+      call read_nc_attribute(ncid, varids(ivar), 'long_name', long_name, &
+                             default='dummy')
+      call read_nc_attribute(ncid, varids(ivar), 'unit', unit, default='---')
+      call read_nc_attribute(ncid, varids(ivar), 'molar_mass', molar_mass, &
+                             default=-999._field_r)
+      call read_nc_attribute(ncid, varids(ivar), 'lemis', lemis, &
+                             default=.false.)
+      call read_nc_attribute(ncid, varids(ivar), 'lreact', lreact, &
+                             default=.false.)
+      call read_nc_attribute(ncid, varids(ivar), 'ldep', ldep, default=.false.)
+      call read_nc_attribute(ncid, varids(ivar), 'lags', lags, default=.false.)
 
       ! Setup tracer
       call add_tracer(trim(name), long_name=trim(long_name), unit=unit, &
@@ -400,20 +400,16 @@ contains
   !!
   !! \param filename Name of the input file.
   !! \param tracers List of tracers to read input for.
+  !! \param nsv Number of tracers.
   !! \param svprof 2D array (z,s) to place initial profiles in.
-  subroutine tracer_profs_from_netcdf(filename, tracers, nsv, svprof)
-    character(*),   intent(in)  :: filename
-    type(T_tracer), intent(in)  :: tracers(:)
-    real(field_r),  intent(out) :: svprof(:,:)
+  subroutine tracer_profs_from_netcdf(filename, tracers, svprof)
+    character(len=*),   intent(in)  :: filename
+    type(T_tracer),     intent(in)  :: tracers(:)
+    real(field_r),      intent(out) :: svprof(:,:)
 
-    integer :: ncid
-    integer :: ivar, nsv
-
-    if (.not. file_exists) return
+    integer :: ncid, ivar
 
     call nchandle_error(nf90_open(filename, NF90_NOWRITE, ncid))
-
-    nsv = size(tracers)
 
     do ivar = 1, nsv
       call read_nc_field(ncid, trim(tracers(ivar) % tracname), svprof(:,ivar), &
