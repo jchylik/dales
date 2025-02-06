@@ -662,7 +662,7 @@ contains
       call D_MPI_BCAST(e12prof,kmax,0,comm3d,mpierr)
 
       if(myid==0)then
-        if (nsv>0 .and. iinput == input_ascii) then
+        if (nsv_user>0 .and. iinput == input_ascii) then
           open (ifinput,file='scalar.inp.'//cexpnr,status='old',iostat=ierr)
           if (ierr /= 0) then
              write(6,*) 'Cannot open the file ', 'scalar.inp.'//cexpnr
@@ -693,25 +693,26 @@ contains
           end do
 
           close(ifinput)
-
-          ! Print tracer profiles to stderr
-          write(0, '(a9)', advance='no') 'height   '
-          do isv = 1, nsv
-            write(0, '(a12)', advance='no') tracer_prop(isv)%tracname
-          end do
-
-          write(0, *)
-
-          do k = kmax, 1, -1
-            write(0,'(f7.1,2x)', advance='no') height(k)
-            do isv = 1, nsv
-              write(0, '(e10.4,2x)', advance='no') svprof(k,isv)
-            end do
-            write(0, *)
-          end do
-
         end if
-      end if ! end if myid==0
+      end if
+
+      if (myid == 0) then
+        ! Print tracer profiles to stderr
+        write(0, '(a9)', advance='no') 'height   '
+        do isv = 1, nsv
+          write(0, '(a12)', advance='no') tracer_prop(isv)%tracname
+        end do
+
+        write(0, *)
+
+        do k = kmax, 1, -1
+          write(0,'(f7.1,2x)', advance='no') height(k)
+          do isv = 1, nsv
+            write(0, '(e10.4,2x)', advance='no') svprof(k,isv)
+          end do
+          write(0, *)
+        end do
+      end if
 
       call D_MPI_BCAST(wsvsurf,        nsv,    0, comm3d, mpierr)
       call D_MPI_BCAST(svprof,         k1*nsv, 0, comm3d, mpierr)
