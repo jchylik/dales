@@ -80,13 +80,30 @@ contains
   subroutine inittracers
     use modglobal, only: cexpnr
     use modmpi,    only: myid, comm3d, d_mpi_bcast
+    character(len=*), parameter :: routine = modname//"::inittracers"
 
+    character(len=128) :: file_profs
+    logical            :: file_exists
 
+    ! First, make sure that the tracer input file exists before calling
+    ! tracer_props_from_xxx
     if (iinput == input_ascii) then
-      call tracer_props_from_ascii('scalar.inp.'//cexpnr, 'tracerdata.inp')
+      file_profs = "scalar.inp."//cexpnr
     else
-      call tracer_props_from_netcdf('tracers.'//cexpnr//'.nc')
-    end if ! ltracers
+      file_profs = "tracers."//cexpnr//".nc"
+    end if
+
+    inquire(file=file_profs, exist=file_exists)
+
+    if (file_exists) then
+      if (iinput == input_ascii) then
+        call tracer_props_from_ascii(file_profs, 'tracerdata.inp')
+      else
+        call tracer_props_from_netcdf(file_profs)
+      end if
+    else
+      call print_info_stderr(routine, trim(file_profs)//" not found")
+    end if
 
   end subroutine inittracers
 
@@ -349,12 +366,6 @@ contains
     real(field_r) :: molar_mass
     logical       :: lemis, lreact, ldep, lags
 
-    inquire(file=filename, exist=file_exists)
-
-    if (.not. file_exists) then
-      write(6,*) "Warning: ", filename, " not found."
-      return
-    end if
 
     call nchandle_error(nf90_open(filename, NF90_NOWRITE, ncid))
     call nchandle_error(nf90_inquire(ncid, nVariables=nvars))
