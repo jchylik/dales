@@ -94,6 +94,7 @@ contains
       end if
     else
       call print_info_stderr(routine, trim(file_profs)//' not found')
+      nsv_user = 0
     end if
 
   end subroutine inittracers
