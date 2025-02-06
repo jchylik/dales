@@ -24,7 +24,8 @@
 
 module modtracers
 
-  use modglobal,      only: nsv, i1, ih, j1, jh, k1, kmax, cexpnr
+  use modglobal,      only: nsv, i1, ih, j1, jh, k1, kmax, cexpnr, iinput, &
+                            input_ascii
   use modprecision,   only: field_r
   use modfields,      only: svm, sv0, svp, sv0av, svprof
   use modmpi,         only: myid, comm3d, d_mpi_bcast, print_info_stderr
@@ -80,10 +81,8 @@ contains
     use modglobal, only: cexpnr
     use modmpi,    only: myid, comm3d, d_mpi_bcast
 
-    ! temporary
-    inquire(file='scalar.inp.'//cexpnr, exist=ltracers)
 
-    if (ltracers) then
+    if (iinput == input_ascii) then
       call tracer_props_from_ascii('scalar.inp.'//cexpnr, 'tracerdata.inp')
     else
       call tracer_props_from_netcdf('tracers.'//cexpnr//'.nc')

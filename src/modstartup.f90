@@ -77,7 +77,7 @@ contains
                                   solver_id, maxiter, maxiter_precond, tolerance, n_pre, n_post, precond_id, checknamelisterror, &
                                   loutdirs, output_prefix, &
                                   lopenbc,linithetero,lperiodic,dxint,dyint,dzint,dxturb,dyturb,taum,tauh,pbc,lsynturb,nmodes,tau,lambda,lambdas,lambdas_x,lambdas_y,lambdas_z,iturb, &
-                                  hypre_logging,rdt,rk3step,i1,j1,k1,ih,jh,lboundary,lconstexner, lstart_netcdf,dzf
+                                  hypre_logging,rdt,rk3step,i1,j1,k1,ih,jh,lboundary,lconstexner, iinput,dzf
     use modforces,         only : lforce_user
     use modsurfdata,       only : z0,ustin,wtsurf,wqsurf,wsvsurf,ps,thls,isurf
     use modsurface,        only : initsurface
@@ -124,7 +124,7 @@ contains
         iexpnr,lwarmstart,startfile,ltotruntime, runtime,dtmax,wctime,dtav_glob,timeav_glob,&
         trestart,irandom,randthl,randqt,krand,nsv,courant,peclet,ladaptive,author,&
         krandumin, krandumax, randu,&
-        nprocx,nprocy,loutdirs, lstart_netcdf
+        nprocx,nprocy,loutdirs, iinput
     namelist/DOMAIN/ &
         itot,jtot,kmax,kmax_soil,&
         xsize,ysize,&
@@ -228,7 +228,7 @@ contains
     call D_MPI_BCAST(timeav_glob,1,0,commwrld,mpierr)
     call D_MPI_BCAST(nsv        ,1,0,commwrld,mpierr)
     call D_MPI_BCAST(loutdirs   ,1,0,commwrld,mpierr)
-    call D_MPI_BCAST(lstart_netcdf,1,0,commwrld,mpierr)
+    call D_MPI_BCAST(iinput, 1, 0, commwrld, mpierr)
 
     call D_MPI_BCAST(itot       ,1,0,commwrld,mpierr) ! DOMAIN
     call D_MPI_BCAST(jtot       ,1,0,commwrld,mpierr)
@@ -531,7 +531,7 @@ contains
                                   zf,dzf,dzh,rv,rd,cp,rlv,pref0,om23_gs,&
                                   ijtot,cu,cv,e12min,dzh,cexpnr,ifinput,lwarmstart,ltotruntime,itrestart,&
                                   trestart, ladaptive,llsadv,tnextrestart,longint,lconstexner,lopenbc, linithetero, &
-                                  lstart_netcdf
+                                  iinput, input_netcdf, input_ascii
     use modsubgrid,        only : ekm,ekh
     use modsurfdata,       only : wsvsurf, &
                                   thls,tskin,tskinm,tsoil,tsoilm,phiw,phiwm,Wl,Wlm,thvs,qts,isurf,svs,obl,oblav,&
@@ -605,7 +605,7 @@ contains
 
           ps         = tb_ps(1)
 
-        else if (lstart_netcdf) then
+        else if (iinput == input_netcdf) then
           call init_from_netcdf('init.'//cexpnr//'.nc', height, uprof, vprof, &
                                 thlprof, qtprof, e12prof, ug, vg, wfls, &
                                 dqtdxls, dqtdyls, dqtdtls, thlpcar, kmax)
@@ -662,7 +662,7 @@ contains
       call D_MPI_BCAST(e12prof,kmax,0,comm3d,mpierr)
 
       if(myid==0)then
-        if (nsv>0 .and. .not. lstart_netcdf) then
+        if (nsv>0 .and. iinput == input_ascii) then
           open (ifinput,file='scalar.inp.'//cexpnr,status='old',iostat=ierr)
           if (ierr /= 0) then
              write(6,*) 'Cannot open the file ', 'scalar.inp.'//cexpnr
@@ -998,7 +998,7 @@ contains
 
       else
 
-        if (lstart_netcdf) then
+        if (iinput == input_netcdf) then
           continue ! Profiles have been read by init_from_netcdf
         else
           open (ifinput,file='lscale.inp.'//cexpnr, status='old',iostat=ierr)
