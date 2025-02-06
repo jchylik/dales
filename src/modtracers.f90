@@ -131,6 +131,13 @@ contains
     character(len=1024)         :: message = ''
     type(T_tracer), allocatable :: tmp(:)
 
+    ! Check if we have already allocated memory
+    if (allocated(sv0)) then
+      call print_info_stderr(routine, 'adding new tracers after memory is &
+        &allocated is not allowed (tracer: '//trim(name)//')')
+      error stop
+    end if
+
     ! Check if the tracer already exists. If so, don't add a new one.
     if (nsv > 0) then
       do s = 1, nsv
