@@ -48,6 +48,7 @@ set( dales_srcs
 	modhypre.f90
 	modlsm.f90
 	modlsmcrosssection.f90
+	modlsmdata.f90
 	modlsmstat.f90
 	modmicrodata.f90
 	modmicrodata3.f90
