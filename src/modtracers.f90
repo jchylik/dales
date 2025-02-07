@@ -3,6 +3,7 @@
 
 !>
 !!  \author Ruud Janssen, TNO
+!!  \author Caspar Jungbacker, TU Delft
 !  This file is part of DALES.
 !
 ! DALES is free software; you can redistribute it and/or modify
