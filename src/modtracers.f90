@@ -387,6 +387,8 @@ contains
 
     call nchandle_error(nf90_inq_varids(ncid, nvars, varids))
 
+    nsv_user = nvars
+
     do ivar = 1, nvars
       call nchandle_error(nf90_inquire_variable(ncid, varids(ivar), name=name))
 
