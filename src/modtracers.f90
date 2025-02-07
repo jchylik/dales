@@ -304,34 +304,33 @@ contains
 
     if (ierr /= 0) then
       call print_info_stderr(routine, 'Error opening '//trim(file_properties))
-      error stop
+    else
+      ierr = 0
+      isv = 0
+      do while (ierr == 0)
+        read(1, '(A)', iostat=ierr) line
+
+        if (ierr == 0) then ! So no end of file is encountered
+          if (line(1:1)=='#') then
+             cycle
+          else
+             isv = isv + 1
+             read(line, *, iostat=ierr) tracname_short(isv), &
+                                        tracname_long(isv), &
+                                        tracer_unit(isv), &
+                                        molar_mass(isv), &
+                                        tracer_is_emitted(isv), &
+                                        tracer_is_reactive(isv), &
+                                        tracer_is_deposited(isv), &
+                                        tracer_is_photosynth(isv), &
+                                        tracer_is_microphys(isv), &
+                                        wsvsurf(isv)
+          end if
+        end if
+      end do
+      close(1)
     end if
 
-    ierr = 0
-    isv = 0
-    do while (ierr == 0)
-      read(1, '(A)', iostat=ierr) line
-
-      if (ierr == 0) then ! So no end of file is encountered
-        if (line(1:1)=='#') then
-          cycle
-        else
-          isv = isv + 1
-          read(line, *, iostat=ierr) tracname_short(isv), &
-                                     tracname_long(isv), &
-                                     tracer_unit(isv), &
-                                     molar_mass(isv), &
-                                     tracer_is_emitted(isv), &
-                                     tracer_is_reactive(isv), &
-                                     tracer_is_deposited(isv), &
-                                     tracer_is_photosynth(isv), &
-                                     tracer_is_microphys(isv), &
-                                     wsvsurf(isv)
-        end if
-      end if
-    end do
-
-    close(1)
 
     ! For every tracer, find the properties
     do n = 2, nheader ! Skip the first column, containing the heights
