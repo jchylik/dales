@@ -681,7 +681,7 @@ contains
             do isv_u = 1, nheader
               if (trim(tracer_prop(isv)%tracname) == trim(headers(isv_u))) then
                 do k = 1, kmax
-                  read(ifinput, *, iostat=ierr) vals_at_lev(:)
+                  read(ifinput, *, iostat=ierr) vals_at_lev(1:nheader)
                   svprof(k,isv) = vals_at_lev(isv_u)
                 end do
                 found = .true.
