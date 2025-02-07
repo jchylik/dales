@@ -566,7 +566,8 @@ contains
     integer, parameter :: maxcol = 50
     character(len=6)   :: headers(maxcol)
     logical            :: found
-    real               :: vals_at_lev(nsv_user)
+    real               :: vals_at_lev(maxcol)
+    integer            :: nheader
 
     allocate (height(k1))
     allocate (th0av(k1))
@@ -672,13 +673,15 @@ contains
           read (ifinput,'(a512)') chmess
           read (ifinput,'(a512)') chmess
 
+          call goSplitString_s(chmess, nheader, headers, ierr, sep=" ")
+
           ! Try to find profiles
           do isv = 1, nsv
             found = .false.
-            do isv_u = 1, nsv_user
+            do isv_u = 1, nheader
               if (trim(tracer_prop(isv)%tracname) == trim(headers(isv_u))) then
                 do k = 1, kmax
-                  read(ifinput, *, iostat=ierr) height(k), vals_at_lev(:)
+                  read(ifinput, *, iostat=ierr) vals_at_lev(:)
                   svprof(k,isv) = vals_at_lev(isv_u)
                 end do
                 found = .true.
