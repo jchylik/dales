@@ -48,6 +48,7 @@ set( dales_srcs
 	modhypre.f90
 	modlsm.f90
 	modlsmcrosssection.f90
+	modlsmdata.f90
 	modlsmstat.f90
 	modmicrodata.f90
 	modmicrodata3.f90
@@ -90,8 +91,6 @@ set( dales_srcs
 	modtimedepsv.f90
 	modtimer.f90
 	modtimestat.f90
-	modtracdata.f90
-	modtracer_type.f90
 	modtracers.f90
 	moduser.f90
 	modvarbudget.f90
