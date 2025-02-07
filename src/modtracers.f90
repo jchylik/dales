@@ -61,6 +61,7 @@ module modtracers
     logical           :: ldep = .false.     !< Boolean if tracer is deposited
     logical           :: lags = .false.     !< Boolean if in A-gs
     logical           :: lmicro = .false.   !< Boolean if in cloud microphysics
+    real(field_r)     :: wsvsurf = 0        !< Kinematic surface flux (- m/s)
   end type T_tracer
 
   integer, protected :: nsv_user !< Number of user-provided tracers
@@ -110,10 +111,10 @@ contains
   !! \param ldep Tracer is deposited.
   !! \param lags Tracer is photosynthesized.
   !! \param lmicro Tracer is involved in cloud microphysics.
-  !! \param laero Tracer is involved in aerosol microphyiscs.
+  !! \param wsvsurf Kinematic surface flux (- m/s).
   !! \note All tracers should be added before readinitfiles is called!
   subroutine add_tracer(name, long_name, unit, molar_mass, lemis, lreact, &
-                        ldep, lags, lmicro, isv)
+                        ldep, lags, lmicro, wsvsurf, isv)
     character(len=*), intent(in)            :: name
     character(len=*), intent(in),  optional :: long_name
     character(len=*), intent(in),  optional :: unit
@@ -123,6 +124,7 @@ contains
     logical,          intent(in),  optional :: ldep
     logical,          intent(in),  optional :: lags
     logical,          intent(in),  optional :: lmicro
+    real(field_r),    intent(in),  optional :: wsvsurf
     integer,          intent(out), optional :: isv
 
     character(len=*), parameter :: routine = modname//'::add_tracer'
@@ -179,6 +181,7 @@ contains
     if (present(ldep)) tracer_prop(nsv) % ldep = ldep
     if (present(lags)) tracer_prop(nsv) % lags = lags
     if (present(lmicro)) tracer_prop(nsv) % lmicro = lmicro
+    if (present(wsvsurf)) tracer_prop(nsv) % wsvsurf = wsvsurf
 
     if (present(isv)) isv = nsv
 
@@ -193,23 +196,25 @@ contains
 
     ! Print tracer properties
     if (myid == 0) then
-      write(6, '(a17,a17,a7,a9,a10,a11)') &
+      write(6, '(a17,a17,a7,a9,a10,a11,a11)') &
         'Tracer           ', &
         'Unit             ', &
         'Index  ', &
         'Emitted  ', &
         'Reactive  ', &
-        'Deposited  '
-      write(6, '(a)') repeat('-', 70)
+        'Deposited  ', &
+        'Surf. Flux '
+      write(6, '(a)') repeat('-', 81)
       do isv = 1, nsv
         tracer = tracer_prop(isv)
-        write(6, '(a,x,a,x,i3,4x,l3,6x,l3,7x,l3,8x)'), & ! Ugh
+        write(6, '(a,x,a,x,i3,4x,l3,6x,l3,7x,l3,8x,e10.4,x)') & ! Ugh
           tracer%tracname, &
           tracer%unit, &
           tracer%trac_idx, &
           tracer%lemis, &
           tracer%lreact, &
-          tracer%ldep
+          tracer%ldep, &
+          tracer%wsvsurf
       end do
     end if
 
@@ -275,6 +280,7 @@ contains
     logical           :: tracer_is_deposited(max_tracs) = .false.
     logical           :: tracer_is_photosynth(max_tracs) = .false.
     logical           :: tracer_is_microphys(max_tracs) = .false.
+    real(field_r)     :: wsvsurf(max_tracs) = 0.0
 
     open(1, file=file_profiles, status='old', iostat=ierr)
 
@@ -319,7 +325,8 @@ contains
                                      tracer_is_reactive(isv), &
                                      tracer_is_deposited(isv), &
                                      tracer_is_photosynth(isv), &
-                                     tracer_is_microphys(isv)
+                                     tracer_is_microphys(isv), &
+                                     wsvsurf(isv)
         end if
       end if
     end do
@@ -345,7 +352,9 @@ contains
         lags=findval(headers(n), tracname_short, &
                tracer_is_photosynth, defltvalue=.false.), & ! Default is False
         lmicro=findval(headers(n), tracname_short, &
-                 tracer_is_microphys, defltvalue=.false.) & ! Default is False
+                 tracer_is_microphys, defltvalue=.false.), & ! Default is False
+        wsvsurf=findval(headers(n), tracname_short, &
+                  wsvsurf, defltvalue=0.0_field_r) &
       )
     end do
     

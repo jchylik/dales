@@ -86,7 +86,7 @@ contains
     use modlsm,            only : initlsm, kmax_soil
     use moddrydeposition,  only : initdrydep
     use modfields,         only : initfields,um,vm,wm,u0,v0,w0,up,vp,wp,rhobf
-    use modtracers,        only : inittracers, allocate_tracers
+    use modtracers,        only : inittracers, allocate_tracers, add_tracer
     use modpois,           only : initpois,poisson
     use modradiation,      only : initradiation
     use modraddata,        only : irad,iradiation,&
@@ -131,7 +131,7 @@ contains
         xlat,xlon,xyear,xday,xtime,ksp
     namelist/PHYSICS/ &
         !cstep z0,ustin,wtsurf,wqsurf,wsvsurf,ps,thls,chi_half,lmoist,isurf,lneutraldrag,&
-        z0,ustin,wtsurf,wqsurf,wsvsurf,ps,thls,lmoist,isurf,chi_half,&
+        z0,ustin,wtsurf,wqsurf,ps,thls,lmoist,isurf,chi_half,&
         lcoriol,lpressgrad,igrw_damp,geodamptime,uvdamprate,lmomsubs,ltimedep,ltimedepuv,ltimedepsv,ntimedep,&
         irad,timerad,iradiation,rad_ls,rad_longw,rad_shortw,rad_smoke,useMcICA,&
         rka,dlwtop,dlwbot,sw0,gc,reff,isvsmoke,lforce_user,lcloudshading,lrigidlid,unudge,lfast_thermo,lconstexner
@@ -247,7 +247,6 @@ contains
     !call D_MPI_BCAST(lneutraldrag ,1,0,commwrld,mpierr)
     call D_MPI_BCAST(wtsurf      ,1,0,commwrld,mpierr)
     call D_MPI_BCAST(wqsurf      ,1,0,commwrld,mpierr)
-    call D_MPI_BCAST(wsvsurf(1:nsv),nsv,0,commwrld,mpierr)
     call D_MPI_BCAST(ps          ,1,0,commwrld,mpierr)
     call D_MPI_BCAST(thls        ,1,0,commwrld,mpierr)
     call D_MPI_BCAST(chi_half    ,1,0,commwrld,mpierr)
