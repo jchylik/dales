@@ -685,6 +685,10 @@ contains
                   svprof(k,isv) = vals_at_lev(isv_u)
                 end do
                 found = .true.
+                ! Go back to the start of the file
+                rewind(ifinput)
+                read(ifinput,'(a512)') chmess
+                read(ifinput,'(a512)') chmess
               end if
             end do
 
