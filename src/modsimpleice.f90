@@ -29,6 +29,7 @@
 
 module modsimpleice
   use modprecision, only : field_r
+  use modtimer
   implicit none
   private
   public initsimpleice, exitsimpleice, simpleice
@@ -131,6 +132,7 @@ module modsimpleice
     integer:: i,j,k
     real:: qrsmall, qrsum,qrtest
 
+    call timer_tic('modsimpleice', 1)
     delt = rdt/ (4. - dble(rk3step))
 
     ! used to check on negative qr and nr
@@ -277,6 +279,7 @@ module modsimpleice
     if (l_rain) then
       call simpleicetend !after corrections
     endif
+    call timer_toc('modsimpleice')
   end subroutine simpleice
 
   subroutine autoconvert
@@ -288,6 +291,7 @@ module modsimpleice
     real :: qll,qli,ddisp,lwc,autl,tc,times,auti,aut
     integer:: i,j,k
 
+    call timer_tic('modsimpleice/autoconvert', 1)
     if(l_berry.eqv..true.) then ! Berry/Hsie autoconversion
     do k=1,kmax
     do j=2,j1
@@ -330,7 +334,7 @@ module modsimpleice
       enddo
       enddo
     endif
-
+    call timer_toc('modsimpleice/autoconvert')
   end subroutine autoconvert
 
   subroutine accrete
@@ -346,6 +350,7 @@ module modsimpleice
             gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
     integer:: i,j,k
 
+    call timer_tic('modsimpleice/accrete', 1)
     do k=1,kmax
     do j=2,j1
     do i=2,i1
@@ -377,7 +382,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-
+    call timer_toc('modsimpleice/accrete')
   end subroutine accrete
 
   subroutine evapdep
@@ -394,6 +399,7 @@ module modsimpleice
             thfun,evapdepr,evapdeps,evapdepg,devap
     integer:: i,j,k
 
+    call timer_tic('modsimpleice/evapdep', 1)
     do k=1,kmax
     do j=2,j1
     do i=2,i1
@@ -423,7 +429,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-
+    call timer_toc('modsimpleice/evapdep')
   end subroutine evapdep
 
   subroutine precipitate
@@ -441,6 +447,7 @@ module modsimpleice
     integer :: n_spl      !<  sedimentation time splitting loop
     real :: dt_spl,wfallmax,vtr,vts,vtg,vtf
 
+    call timer_tic('modsimpleice/precipitate', 1)
     wfallmax = 9.9
     n_spl = ceiling(wfallmax*delt/(minval(dzf)*courantp))
     dt_spl = delt/real(n_spl) !fixed time step
@@ -523,7 +530,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-
+    call timer_toc('modsimpleice/precipitate')
   end subroutine precipitate
 
 end module modsimpleice
