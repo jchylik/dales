@@ -60,7 +60,7 @@ module modsimpleice
     implicit none
 
     call add_tracer("qr", long_name="Total precipitation mixing ratio", &
-                    unit="kg/kg", lmicro=.true., isv=iqr) 
+                    unit="kg/kg", lmicro=.true., isv=iqr)
 
     allocate (qr(2:i1,2:j1,k1)        & ! qr (total precipitation!) converted from a scalar variable
              ,qrp(2:i1,2:j1,k1)       & ! qr tendency due to microphysics only, for statistics
@@ -115,7 +115,7 @@ module modsimpleice
 
 !> Calculates the microphysical source term.
   subroutine simpleice
-    use modglobal, only : i1,j1,k1,rdt,rk3step,timee,rlv,cp,tup,tdn
+    use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,rlv,cp,tup,tdn
     use modfields, only : sv0,svm,svp,qtp,thlp,ql0,exnf,rhof,tmp0,rhobf
     use modsimpleicestat, only : simpleicetend
     use modmicrodata, only : nr, nrp, iqr, qrp, qtpmcr, thlpmcr, delt, &
@@ -184,7 +184,7 @@ module modsimpleice
 
 
     if(l_warm) then !partitioning and determination of intercept parameter
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
         ilratio(i,j,k)=1.   ! cloud water vs cloud ice partitioning
@@ -192,7 +192,7 @@ module modsimpleice
       enddo
       enddo
     else
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
         ilratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdn)/(tup-tdn)))! cloud water vs cloud ice partitioning
@@ -202,12 +202,12 @@ module modsimpleice
     end if
 
     if(l_warm) then !partitioning and determination of intercept parameter
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
+        rsgratio(i,j,k)=1.  ! rain vs snow/graupel partitioning
+        sgratio(i,j,k)=0.   ! snow versus graupel partitioning
         if(qrmask(i,j,k).eqv..true.) then
-          rsgratio(i,j,k)=1.   ! rain vs snow/graupel partitioning
-          sgratio(i,j,k)=0.   ! snow versus graupel partitioning
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)+1.e-6)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=lambdar(i,j,k) ! lambda snow
           lambdag(i,j,k)=lambdar(i,j,k) ! lambda graupel
@@ -216,12 +216,12 @@ module modsimpleice
       enddo
       enddo
     elseif(l_graupel) then
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
+        rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg))) ! rain vs snow/graupel partitioning
+        sgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnsg)/(tupsg-tdnsg))) ! snow versus graupel partitioning
         if(qrmask(i,j,k).eqv..true.) then
-          rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg))) ! rain vs snow/graupel partitioning
-          sgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnsg)/(tupsg-tdnsg))) ! snow versus graupel partitioning
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+1.e-6)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))+1.e-6)))**(1./(1.+bbs)) ! snow
           lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))*sgratio(i,j,k)+1.e-6)))**(1./(1.+bbg)) ! graupel
@@ -230,12 +230,12 @@ module modsimpleice
       enddo
       enddo
     else
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
+        rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg)))   ! rain vs snow/graupel partitioning
+        sgratio(i,j,k)=0.
         if(qrmask(i,j,k).eqv..true.) then
-          rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg)))   ! rain vs snow/graupel partitioning
-          sgratio(i,j,k)=0.
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+1.e-6)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))+1.e-6)))**(1./(1.+bbs)) ! lambda snow
           lambdag(i,j,k)=lambdas(i,j,k)
@@ -256,7 +256,7 @@ module modsimpleice
       call precipitate
     endif
 
-    do k=1,k1
+    do k=1,kmax
     do j=2,j1
     do i=2,i1
       qrtest=svm(i,j,k,iqr)+(svp(i,j,k,iqr)+qrp(i,j,k))*delt
@@ -280,7 +280,7 @@ module modsimpleice
   end subroutine simpleice
 
   subroutine autoconvert
-    use modglobal, only : i1,j1,k1,rlv,cp,tmelt
+    use modglobal, only : i1,j1,kmax,rlv,cp,tmelt
     use modfields, only : ql0,exnf,rhof,tmp0
     use modmicrodata, only : betakessi, delt, l_berry, Nc_0, qli0, qll0, timekessl, &
                              qcmask, qrp, qtpmcr, thlpmcr, ilratio
@@ -289,7 +289,7 @@ module modsimpleice
     integer:: i,j,k
 
     if(l_berry.eqv..true.) then ! Berry/Hsie autoconversion
-    do k=1,k1
+    do k=1,kmax
     do j=2,j1
     do i=2,i1
         if (qcmask(i,j,k).eqv..true.) then
@@ -311,7 +311,7 @@ module modsimpleice
       enddo
       enddo
     else ! Lin/Kessler autoconversion as in Khairoutdinov and Randall, 2006
-      do k=1,k1
+      do k=1,kmax
       do j=2,j1
       do i=2,i1
         if (qcmask(i,j,k).eqv..true.) then
@@ -334,7 +334,7 @@ module modsimpleice
   end subroutine autoconvert
 
   subroutine accrete
-    use modglobal, only : i1,j1,k1,rlv,cp,pi
+    use modglobal, only : i1,j1,kmax,rlv,cp,pi
     use modfields, only : ql0,exnf,rhof
     use modmicrodata, only : ddg, ddr, dds, aag, aar, aas, bbg, bbr, bbs, delt, &
                              lambdag, lambdar, lambdas, ccgz, ccrz, ccsz, &
@@ -346,7 +346,7 @@ module modsimpleice
             gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
     integer:: i,j,k
 
-    do k=1,k1
+    do k=1,kmax
     do j=2,j1
     do i=2,i1
       if (qrmask(i,j,k).eqv..true.) then
@@ -381,7 +381,7 @@ module modsimpleice
   end subroutine accrete
 
   subroutine evapdep
-    use modglobal, only : i1,j1,k1,rlv,cp,pi
+    use modglobal, only : i1,j1,kmax,rlv,cp,pi
     use modfields, only : qt0,ql0,exnf,rhof,tmp0,qvsl,qvsi,esl
     use modmicrodata, only : betag, betar, betas, ddg, ddr, dds, delt, &
                              n0rg, n0rr, n0rs, &
@@ -394,7 +394,7 @@ module modsimpleice
             thfun,evapdepr,evapdeps,evapdepg,devap
     integer:: i,j,k
 
-    do k=1,k1
+    do k=1,kmax
     do j=2,j1
     do i=2,i1
       if (qrmask(i,j,k).eqv..true.) then
@@ -402,8 +402,12 @@ module modsimpleice
         ssl=(qt0(i,j,k)-ql0(i,j,k))/qvsl(i,j,k)
         ssi=(qt0(i,j,k)-ql0(i,j,k))/qvsi(i,j,k)
         !integration over ventilation factors and diameters, see e.g. seifert 2008
+        !Grabovski 1998 https://doi.org/10.1175/1520-0469(1998)055<3283:TCRMOL>2.0.CO;2 says
+        !F  = 0.78 + 0.27 Re^1/2  for raindrops
+        !F  = 0.65 + 0.39 Re^1/2  for ice particles
+        !for the ventilation factor F
         ventr=.78*n0rr/lambdar(i,j,k)**2 + gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)*lambdar(i,j,k)**(-2.5-0.5*ddr)
-        vents=.78*n0rs/lambdas(i,j,k)**2 + gam2ds*.27*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
+        vents=.78*n0rs/lambdas(i,j,k)**2 + gam2ds*.27*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds) ! FJ  .78->.65 .27->.39
         ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
         thfun=1.e-7/(2.2*tmp0(i,j,k)/esl(i,j,k)+2.2e2/tmp0(i,j,k))  ! thermodynamic function
         evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1.)*ventr*thfun
@@ -423,7 +427,7 @@ module modsimpleice
   end subroutine evapdep
 
   subroutine precipitate
-    use modglobal, only : i1,j1,k1,kmax,dzf,dzh
+    use modglobal, only : i1,j1,kmax,dzf,dzh
     use modfields, only : rhof,rhobf
     use modmicrodata, only : qr_spl, sed_qr, precep, qr, qrp, &
                              aag, aas, aar, bbg, bbs, bbr, ddg, dds, ddr, n0rg, n0rs, n0rr, &
@@ -443,7 +447,7 @@ module modsimpleice
 
     sed_qr = 0. ! reset sedimentation fluxes
 
-    do k=1,k1
+    do k=1,kmax
     do j=2,j1
     do i=2,i1
       qr_spl(i,j,k) = qr(i,j,k)
@@ -478,7 +482,7 @@ module modsimpleice
 
         ! reset fluxes at each step of loop
         sed_qr = 0.
-        do k=1,k1
+        do k=1,kmax
         do j=2,j1
         do i=2,i1
           if (qr_spl(i,j,k) > qrmin) then
