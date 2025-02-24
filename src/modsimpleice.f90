@@ -407,7 +407,7 @@ module modsimpleice
         !F  = 0.65 + 0.39 Re^1/2  for ice particles
         !for the ventilation factor F
         ventr=.78*n0rr/lambdar(i,j,k)**2 + gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)*lambdar(i,j,k)**(-2.5-0.5*ddr)
-        vents=.78*n0rs/lambdas(i,j,k)**2 + gam2ds*.27*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds) ! FJ  .78->.65 .27->.39
+        vents=.65*n0rs/lambdas(i,j,k)**2 + gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
         ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
         thfun=1.e-7/(2.2*tmp0(i,j,k)/esl(i,j,k)+2.2e2/tmp0(i,j,k))  ! thermodynamic function
         evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1.)*ventr*thfun
