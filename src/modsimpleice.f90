@@ -133,6 +133,7 @@ module modsimpleice
     real:: qrsmall, qrsum,qrtest
 
     call timer_tic('modsimpleice', 1)
+    call timer_tic('modsimpleice/setup', 1)
     delt = rdt/ (4. - dble(rk3step))
 
     ! used to check on negative qr and nr
@@ -246,6 +247,7 @@ module modsimpleice
       enddo
       enddo
     endif
+    call timer_toc('modsimpleice/setup')
 
     if (l_rain) then
       call simpleicetend
@@ -258,6 +260,7 @@ module modsimpleice
       call precipitate
     endif
 
+    call timer_tic('modsimpleice/finalize', 1)
     do k=1,kmax
     do j=2,j1
     do i=2,i1
@@ -279,6 +282,7 @@ module modsimpleice
     if (l_rain) then
       call simpleicetend !after corrections
     endif
+    call timer_toc('modsimpleice/finalize')
     call timer_toc('modsimpleice')
   end subroutine simpleice
 
