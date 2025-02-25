@@ -38,6 +38,7 @@
 module modsimpleice2
   use modfields, only : rhobf
   use modprecision, only : field_r
+  use modtimer
   implicit none
   private
   public initsimpleice2, exitsimpleice2, simpleice2
@@ -180,6 +181,7 @@ module modsimpleice2
     logical :: rain_present, snow_present, graupel_present   ! logicals for presence of different forms of water in the current cell
     logical :: any_qr, any_snow_graupel                      ! logicals for precense of any precipitation, and for presense of snow/graupel in the whole system
 
+    call timer_tic('modsimpleice2', 1)
     delt = rdt/ (4. - dble(rk3step))
 
     wfallmax = 9.9 ! cap for fall velocity
@@ -601,6 +603,7 @@ module modsimpleice2
 !    if (l_rain) then
 !      call simpleicetend !after corrections
 !    endif
+    call timer_toc('modsimpleice2')
   end subroutine simpleice2
 
 end module modsimpleice2
