@@ -116,8 +116,8 @@ module modsimpleice
 
 !> Calculates the microphysical source term.
   subroutine simpleice
-    use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,rlv,cp,tup,tdn
-    use modfields, only : sv0,svm,svp,qtp,thlp,ql0,exnf,rhof,tmp0,rhobf
+    use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,tup,tdn
+    use modfields, only : sv0,svm,svp,qtp,thlp,ql0,rhof,tmp0,rhobf
     use modbulkmicrostat, only : bulkmicrotend
     use modmicrodata, only : nr, nrp, iqr, qrp, qtpmcr, thlpmcr, delt, &
                              qcmask, qcmin, qrmask, qrmin, qr, &
@@ -130,7 +130,7 @@ module modsimpleice
                              l_graupel, l_rain, l_warm
     implicit none
     integer:: i,j,k
-    real:: qrsmall, qrsum,qrtest
+    real:: qrsmall, qrsum, qr_cor
 
     call timer_tic('modsimpleice', 1)
     call timer_tic('modsimpleice/setup', 1)
@@ -262,26 +262,36 @@ module modsimpleice
     endif
 
     call timer_tic('modsimpleice/finalize', 1)
-    do k=1,kmax
-    do j=2,j1
-    do i=2,i1
-      qrtest=svm(i,j,k,iqr)+(svp(i,j,k,iqr)+qrp(i,j,k))*delt
-      if (qrtest .lt. qrmin) then ! correction, after Jerome's implementation in Gales
-        qtp(i,j,k) = qtp(i,j,k) + qtpmcr(i,j,k) + svm(i,j,k,iqr)/delt + svp(i,j,k,iqr) + qrp(i,j,k)
-        thlp(i,j,k) = thlp(i,j,k) +thlpmcr(i,j,k) - (rlv/(cp*exnf(k)))*(svm(i,j,k,iqr)/delt + svp(i,j,k,iqr) + qrp(i,j,k))
-        svp(i,j,k,iqr) = - svm(i,j,k,iqr)/delt
-      else
-      svp(i,j,k,iqr)=svp(i,j,k,iqr)+qrp(i,j,k)
-      thlp(i,j,k)=thlp(i,j,k)+thlpmcr(i,j,k)
-      qtp(i,j,k)=qtp(i,j,k)+qtpmcr(i,j,k)
-      ! adjust negative qr tendencies at the end of the time-step
-     end if
-    enddo
-    enddo
+
+
+    ! cap the microphysics tendency so that it doesn't take qr below 0
+    !$acc parallel loop collapse(3) default(present) private(qr_cor)
+    do k = 1, k1
+      do j = 2, j1
+        do i = 2, i1
+          qr_cor = min(svp(i,j,k,iqr) + qrp(i,j,k) + (svm(i,j,k,iqr) / delt), &
+                       0.0_field_r)
+
+          qrp(i,j,k) = qrp(i,j,k) - qr_cor
+        end do
+      end do
+    end do
+
+    call bulkmicrotend
+
+    ! apply final microphysics tendency
+    !$acc parallel loop collapse(3) default(present)
+    do k = 1, k1
+      do j = 2, j1
+        do i = 2, i1
+          qtp (i,j,k) = qtp (i,j,k) + qtpmcr (i,j,k)
+          thlp(i,j,k) = thlp(i,j,k) + thlpmcr(i,j,k)
+          svp(i,j,k,iqr) = svp(i,j,k,iqr) + qrp(i,j,k)
+        enddo
+      enddo
     enddo
 
     call timer_toc('modsimpleice/finalize')
-    call bulkmicrotend
     call timer_toc('modsimpleice')
   end subroutine simpleice
 
