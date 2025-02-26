@@ -118,7 +118,7 @@ module modsimpleice
   subroutine simpleice
     use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,rlv,cp,tup,tdn
     use modfields, only : sv0,svm,svp,qtp,thlp,ql0,exnf,rhof,tmp0,rhobf
-    use modsimpleicestat, only : simpleicetend
+    use modbulkmicrostat, only : bulkmicrotend
     use modmicrodata, only : nr, nrp, iqr, qrp, qtpmcr, thlpmcr, delt, &
                              qcmask, qcmin, qrmask, qrmin, qr, &
                              ilratio, rsgratio, sgratio, &
@@ -250,14 +250,15 @@ module modsimpleice
     call timer_toc('modsimpleice/setup')
 
     if (l_rain) then
-      call simpleicetend
+      call bulkmicrotend
       call autoconvert
-      call simpleicetend
+      call bulkmicrotend
       call accrete
-      call simpleicetend
+      call bulkmicrotend
       call evapdep
-      call simpleicetend
+      call bulkmicrotend
       call precipitate
+      call bulkmicrotend
     endif
 
     call timer_tic('modsimpleice/finalize', 1)
@@ -279,10 +280,8 @@ module modsimpleice
     enddo
     enddo
 
-    if (l_rain) then
-      call simpleicetend !after corrections
-    endif
     call timer_toc('modsimpleice/finalize')
+    call bulkmicrotend
     call timer_toc('modsimpleice')
   end subroutine simpleice
 

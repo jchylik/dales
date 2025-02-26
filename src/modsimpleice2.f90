@@ -162,8 +162,6 @@ module modsimpleice2
                              qcmin,qrmin,qli0,qll0,tdnrsg,tdnsg,tuprsg,tupsg,&
                              l_berry,l_graupel,l_rain,l_warm,timekessl
 
-    use modsimpleicestat, only : simpleicetend
-
     implicit none
 
     integer:: i,j,k
