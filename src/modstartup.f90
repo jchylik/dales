@@ -846,8 +846,14 @@ contains
       thvs = thls * (1. + (rv/rd - 1.) * qts)
       if (lhetero) thvs_patch = thvs  !Needed for initialization: thls_patch and qt_patch not yet calculated
 
-      u0av(1)   = uprof(1)
-      thl0av(1) = thlprof(1)
+      thl0av(:) = thlprof(:)   ! these are used for the top boundary in modboundary
+      qt0av(:)  = qtprof(:)    ! but have not been initialized yet (?)
+      sv0av(:,:) = svprof(:,:) !
+                               ! TODO: OpenACC??
+
+      u0av(:)   = uprof(:)
+      v0av(:)   = vprof(:)
+
       svs = svprof(1,:)
 
       call baseprofs ! call baseprofs before thermodynamics
