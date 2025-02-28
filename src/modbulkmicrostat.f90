@@ -162,6 +162,8 @@ subroutine initbulkmicrostat
     qrmn    = 0.0
     Dvrmn    = 0.0
 
+    Dvrav = 0
+
     allocate(tend_np(k1))
     allocate(tend_qrp(k1))
     tend_np(:) = 0.0

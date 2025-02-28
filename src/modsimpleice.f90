@@ -66,8 +66,8 @@ module modsimpleice
 
     allocate (qr(2:i1,2:j1,k1)        & ! qr (total precipitation!) converted from a scalar variable
              ,qrp(2:i1,2:j1,k1)       & ! qr tendency due to microphysics only, for statistics
-             ,nr(2:i1,2:j1,k1)        & ! qr (total precipitation!) converted from a scalar variable
-             ,nrp(2:i1,2:j1,k1)       & ! qr tendency due to microphysics only, for statistics
+             ,nr(2:i1,2:j1,k1)        & ! Nr converted from a scalar variable
+             ,nrp(2:i1,2:j1,k1)       & ! Nr tendency due to microphysics only, for statistics
              ,thlpmcr(2:i1,2:j1,k1)   & ! thl tendency due to microphysics only, for statistics
              ,qtpmcr(2-ih:i1+ih,2-jh:j1+jh,k1) & ! qt tendency due to microphysics only, for statistics. Ghost cells for modvarbudget.
              ,sed_qr(2:i1,2:j1,k1)    & ! sedimentation rain droplets mixing ratio
@@ -85,6 +85,10 @@ module modsimpleice
     allocate(precep(2:i1,2:j1,k1))      ! precipitation for statistics
 
     allocate(ccrz(k1),ccsz(k1),ccgz(k1))
+
+    nrp=0
+    nr=0
+    precep=0
 
      gamb1r=lacz_gamma(bbr+1)
      gambd1r=lacz_gamma(bbr+ddr+1)
@@ -120,7 +124,7 @@ module modsimpleice
     use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,tup,tdn
     use modfields, only : sv0,svm,svp,qtp,thlp,ql0,rhof,tmp0,rhobf
     use modbulkmicrostat, only : bulkmicrotend
-    use modmicrodata, only : nr, nrp, iqr, qrp, qtpmcr, thlpmcr, delt, &
+    use modmicrodata, only : iqr, qrp, qtpmcr, thlpmcr, delt, &
                              qcmask, qcmin, qrmask, qrmin, qr, &
                              ilratio, rsgratio, sgratio, &
                              aag, aar, aas, bbg, bbr, bbs, ccg, ccr, ccs, &
@@ -144,8 +148,6 @@ module modsimpleice
     qrsmall=0.
     ! reset microphysics tendencies
     qrp=0.
-    nrp=0.
-    nr=0.
     thlpmcr=0.
     qtpmcr=0.
 
