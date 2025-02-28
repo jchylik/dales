@@ -135,7 +135,7 @@ module modsimpleice
                              l_graupel, l_rain, l_warm
     implicit none
     integer:: i,j,k
-    real:: qrsmall, qrsum, qr_cor
+    real(field_r):: qrsmall, qrsum, qr_cor
 
     call timer_tic('modsimpleice', 1)
     call timer_tic('modsimpleice/setup', 1)
@@ -195,7 +195,7 @@ module modsimpleice
       do k=1,kmax
       do j=2,j1
       do i=2,i1
-        ilratio(i,j,k)=1.   ! cloud water vs cloud ice partitioning
+        ilratio(i,j,k)=1   ! cloud water vs cloud ice partitioning
       enddo
       enddo
       enddo
@@ -213,8 +213,8 @@ module modsimpleice
       do k=1,kmax
       do j=2,j1
       do i=2,i1
-        rsgratio(i,j,k)=1.  ! rain vs snow/graupel partitioning
-        sgratio(i,j,k)=0.   ! snow versus graupel partitioning
+        rsgratio(i,j,k)=1  ! rain vs snow/graupel partitioning
+        sgratio(i,j,k)=0   ! snow versus graupel partitioning
         if(qrmask(i,j,k).eqv..true.) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=lambdar(i,j,k) ! lambda snow
@@ -231,8 +231,8 @@ module modsimpleice
         sgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnsg)/(tupsg-tdnsg))) ! snow versus graupel partitioning
         if(qrmask(i,j,k).eqv..true.) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! snow
-          lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! graupel
+          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! snow
+          lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! graupel
         endif
       enddo
       enddo
@@ -245,7 +245,7 @@ module modsimpleice
         sgratio(i,j,k)=0.
         if(qrmask(i,j,k).eqv..true.) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1.-rsgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
+          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
           lambdag(i,j,k)=lambdas(i,j,k)
         end if
       enddo
@@ -306,7 +306,7 @@ module modsimpleice
     use modmicrodata, only : betakessi, delt, l_berry, Nc_0, qli0, qll0, timekessl, &
                              qcmask, qrp, qtpmcr, thlpmcr, ilratio
     implicit none
-    real :: qll,qli,ddisp,lwc,autl,tc,times,auti,aut
+    real(field_r) :: qll,qli,ddisp,lwc,autl,tc,times,auti,aut
     integer:: i,j,k
 
     call timer_tic('modsimpleice/autoconvert', 1)
@@ -324,7 +324,7 @@ module modsimpleice
           tc=tmp0(i,j,k)-tmelt ! Temperature wrt melting point
           times=min(1.e3,(3.56*tc+106.7)*tc+1.e3) ! Time scale for ice autoconversion
           auti=qli/times
-          aut = min(autl + auti,ql0(i,j,k)/delt*1.0) ! convert RHS to double for nvidia compiler
+          aut = min(autl + auti,ql0(i,j,k)/delt)
           qrp(i,j,k) = qrp(i,j,k)+aut
           qtpmcr(i,j,k) = qtpmcr(i,j,k)-aut
           thlpmcr(i,j,k) = thlpmcr(i,j,k)+(rlv/(cp*exnf(k)))*aut
@@ -343,7 +343,7 @@ module modsimpleice
           autl=max(0.,timekessl*(qll-qll0))
           tc=tmp0(i,j,k)-tmelt
           auti=max(0.,betakessi*exp(0.025*tc)*(qli-qli0))
-          aut = min(autl + auti,ql0(i,j,k)/delt*1.0) ! convert RHS to double for nvidia compiler
+          aut = min(autl + auti,ql0(i,j,k)/delt)
           qrp(i,j,k) = qrp(i,j,k)+aut
           qtpmcr(i,j,k) = qtpmcr(i,j,k)-aut
           thlpmcr(i,j,k) = thlpmcr(i,j,k)+(rlv/(cp*exnf(k)))*aut
@@ -364,8 +364,8 @@ module modsimpleice
                              qrmask, qcmask, qr, qrp, qtpmcr, thlpmcr, &
                              ilratio, rsgratio, sgratio
     implicit none
-    real :: qll,qli,qrr,qrs,qrg,&
-            gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
+    real(field_r) :: qll,qli,qrr,qrs,qrg,&
+                     gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
     integer:: i,j,k
 
     call timer_tic('modsimpleice/accrete', 1)
@@ -391,7 +391,7 @@ module modsimpleice
         accr=(gaccrl+gaccri)*qrr/(qrr+eps_accr)
         accs=(gaccsl+gaccsi)*qrs/(qrs+eps_accr)
         accg=(gaccgl+gaccgi)*qrg/(qrg+eps_accr)
-        acc= min(accr+accs+accg,ql0(i,j,k)/delt*1.0)  ! total growth by accretion ! convert RHS to double for nvidia compiler
+        acc= min(accr+accs+accg,ql0(i,j,k)/delt)  ! total growth by accretion
         qrp(i,j,k) = qrp(i,j,k)+acc
         qtpmcr(i,j,k) = qtpmcr(i,j,k)-acc
         thlpmcr(i,j,k) = thlpmcr(i,j,k)+(rlv/(cp*exnf(k)))*acc
@@ -413,8 +413,8 @@ module modsimpleice
                              qrmask
     implicit none
 
-    real :: ssl,ssi,ventr,vents,ventg,&
-            thfun,evapdepr,evapdeps,evapdepg,devap
+    real(field_r) :: ssl,ssi,ventr,vents,ventg,&
+                     thfun,evapdepr,evapdeps,evapdepg,devap
     integer:: i,j,k
 
     call timer_tic('modsimpleice/evapdep', 1)
@@ -434,12 +434,12 @@ module modsimpleice
         vents=.65*n0rs/lambdas(i,j,k)**2 + gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
         ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
         thfun=1.e-7/(2.2*tmp0(i,j,k)/esl(i,j,k)+2.2e2/tmp0(i,j,k))  ! thermodynamic function
-        evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1.)*ventr*thfun
-        evapdeps=(4.*pi/(betas*rhof(k)))*(ssi-1.)*vents*thfun
-        evapdepg=(4.*pi/(betag*rhof(k)))*(ssi-1.)*ventg*thfun
+        evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1)*ventr*thfun
+        evapdeps=(4.*pi/(betas*rhof(k)))*(ssi-1)*vents*thfun
+        evapdepg=(4.*pi/(betag*rhof(k)))*(ssi-1)*ventg*thfun
         ! total growth by deposition and evaporation
         ! limit with qr and ql after accretion and autoconversion
-        devap= max(min(evapfactor*(evapdepr+evapdeps+evapdepg),ql0(i,j,k)/delt+qrp(i,j,k)*1.0),-qr(i,j,k)/delt-qrp(i,j,k)*1.0) !
+        devap= max(min(evapfactor*(evapdepr+evapdeps+evapdepg),ql0(i,j,k)/delt+qrp(i,j,k)),-qr(i,j,k)/delt-qrp(i,j,k))
         qrp(i,j,k) = qrp(i,j,k)+devap
         qtpmcr(i,j,k) = qtpmcr(i,j,k)-devap
         thlpmcr(i,j,k) = thlpmcr(i,j,k)+(rlv/(cp*exnf(k)))*devap
@@ -463,14 +463,14 @@ module modsimpleice
     implicit none
     integer :: i,j,k,jn
     integer :: n_spl      !<  sedimentation time splitting loop
-    real :: dt_spl,wfallmax,vtr,vts,vtg,vtf
+    real(field_r) :: dt_spl,wfallmax,vtr,vts,vtg,vtf
 
     call timer_tic('modsimpleice/precipitate', 1)
     wfallmax = 9.9
     n_spl = ceiling(wfallmax*delt/(minval(dzf)*courantp))
     dt_spl = delt/real(n_spl) !fixed time step
 
-    sed_qr = 0. ! reset sedimentation fluxes
+    sed_qr = 0 ! reset sedimentation fluxes
 
     do k=1,kmax
     do j=2,j1
@@ -480,13 +480,13 @@ module modsimpleice
         vtr=ccrz(k)*(gambd1r/gamb1r)/(lambdar(i,j,k)**ddr)  ! terminal velocity rain
         vts=ccsz(k)*(gambd1s/gamb1s)/(lambdas(i,j,k)**dds)  ! terminal velocity snow
         vtg=ccgz(k)*(gambd1g/gamb1g)/(lambdag(i,j,k)**ddg)  ! terminal velocity graupel
-        vtf=rsgratio(i,j,k)*vtr+(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))*vts+(1.-rsgratio(i,j,k))*sgratio(i,j,k)*vtg ! weighted
+        vtf=rsgratio(i,j,k)*vtr+(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))*vts+(1-rsgratio(i,j,k))*sgratio(i,j,k)*vtg ! weighted
         vtf = min(wfallmax,vtf)
         precep(i,j,k) = vtf*qr_spl(i,j,k)
         sed_qr(i,j,k) = precep(i,j,k)*rhobf(k) ! convert to flux
       else
-        precep(i,j,k) = 0.
-        sed_qr(i,j,k) = 0.
+        precep(i,j,k) = 0
+        sed_qr(i,j,k) = 0
       end if
     enddo
     enddo
@@ -506,23 +506,23 @@ module modsimpleice
       DO jn = 2 , n_spl
 
         ! reset fluxes at each step of loop
-        sed_qr = 0.
+        sed_qr = 0
         do k=1,kmax
         do j=2,j1
         do i=2,i1
           if (qr_spl(i,j,k) > qrmin) then
             ! re-evaluate lambda
             lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr_spl(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-            lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr_spl(i,j,k)*(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
-            lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr_spl(i,j,k)*(1.-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! lambda graupel
+            lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
+            lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! lambda graupel
             vtr=ccrz(k)*(gambd1r/gamb1r)/(lambdar(i,j,k)**ddr)  ! terminal velocity rain
             vts=ccsz(k)*(gambd1s/gamb1s)/(lambdas(i,j,k)**dds)  ! terminal velocity snow
             vtg=ccgz(k)*(gambd1g/gamb1g)/(lambdag(i,j,k)**ddg)  ! terminal velocity graupel
-            vtf=rsgratio(i,j,k)*vtr+(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))*vts+(1.-rsgratio(i,j,k))*sgratio(i,j,k)*vtg  ! mass-weighted terminal velocity
+            vtf=rsgratio(i,j,k)*vtr+(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))*vts+(1-rsgratio(i,j,k))*sgratio(i,j,k)*vtg  ! mass-weighted terminal velocity
             vtf=min(wfallmax,vtf)
             sed_qr(i,j,k) = vtf*qr_spl(i,j,k)*rhobf(k)
           else
-            sed_qr(i,j,k) = 0.
+            sed_qr(i,j,k) = 0
           endif
         enddo
         enddo
