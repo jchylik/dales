@@ -53,7 +53,7 @@ module modsimpleice
     use modmicrodata, only : qr, qrp, nr, nrp, thlpmcr, qtpmcr, sed_qr, qr_spl, &
                              ilratio, rsgratio, sgratio, &
                              lambdar, lambdas, lambdag, &
-                             qrmask, qcmask, precep, &
+                             precep, &
                              ccrz, ccsz, ccgz, ccrz2, ccsz2, ccgz2, bbg, bbr, bbs, ddg, ddr, dds, iqr
 
     use modglobal, only : ih,i1,jh,j1,k1,lacz_gamma
@@ -79,8 +79,6 @@ module modsimpleice
              ,lambdas(2:i1,2:j1,k1)   & ! slope parameter for snow
              ,lambdag(2:i1,2:j1,k1))    ! slope parameter for graupel
 
-    allocate (qrmask(2:i1,2:j1,k1)    & ! mask for rain water
-             ,qcmask(2:i1,2:j1,k1))     ! mask for cloud water
 
     allocate(precep(2:i1,2:j1,k1))      ! precipitation for statistics
 
@@ -110,13 +108,11 @@ module modsimpleice
   subroutine exitsimpleice
     use modmicrodata, only : nr,nrp,qr,qrp,thlpmcr,qtpmcr,sed_qr,qr_spl, &
                              ilratio,rsgratio,sgratio,lambdar,lambdas,lambdag, &
-                             qrmask,qcmask, &
                              precep, &
                              ccrz,ccsz,ccgz,&
                              ccrz2,ccsz2,ccgz2
     implicit none
     deallocate(nr,nrp,qr,qrp,thlpmcr,qtpmcr,sed_qr,qr_spl,ilratio,rsgratio,sgratio,lambdar,lambdas,lambdag)
-    deallocate(qrmask,qcmask)
     deallocate(precep)
     deallocate(ccrz,ccsz,ccgz)
     deallocate(ccrz2,ccsz2,ccgz2)
@@ -126,10 +122,10 @@ module modsimpleice
 !> Calculates the microphysical source term.
   subroutine simpleice
     use modglobal, only : i1,j1,kmax,k1,rdt,rk3step,timee,tup,tdn
-    use modfields, only : sv0,svm,svp,qtp,thlp,ql0,rhof,tmp0,rhobf
+    use modfields, only : sv0,svm,svp,qtp,thlp,rhof,tmp0,rhobf
     use modbulkmicrostat, only : bulkmicrotend
     use modmicrodata, only : iqr, qrp, qtpmcr, thlpmcr, delt, &
-                             qcmask, qcmin, qrmask, qrmin, qr, &
+                             qrmin, qr, &
                              ilratio, rsgratio, sgratio, &
                              aag, aar, aas, bbg, bbr, bbs, ccg, ccr, ccs, &
                              n0rg, n0rr, n0rs, &
@@ -173,23 +169,14 @@ module modsimpleice
     do i=2,i1
       ! initialise qr
       qr(i,j,k)= sv0(i,j,k,iqr)
-      ! initialise qc mask
-      if (ql0(i,j,k) > qcmin) then
-        qcmask(i,j,k) = .true.
-      else
-        qcmask(i,j,k) = .false.
-      end if
-      ! initialise qr mask and check if we are not throwing away too much rain
+      ! check if we are not throwing away too much rain
       if (l_rain) then
         qrsum = qrsum+qr(i,j,k)
         if (qr(i,j,k) <= qrmin) then
-          qrmask(i,j,k) = .false.
           if(qr(i,j,k)<0.) then
           qrsmall = qrsmall-qr(i,j,k)
           qr(i,j,k)=0.
           end if
-        else
-          qrmask(i,j,k)=.true.
         endif
       endif
     enddo
@@ -225,7 +212,7 @@ module modsimpleice
       do i=2,i1
         rsgratio(i,j,k)=1  ! rain vs snow/graupel partitioning
         sgratio(i,j,k)=0   ! snow versus graupel partitioning
-        if(qrmask(i,j,k).eqv..true.) then
+        if(qr(i,j,k) > qrmin) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=lambdar(i,j,k) ! lambda snow
           lambdag(i,j,k)=lambdar(i,j,k) ! lambda graupel
@@ -239,7 +226,7 @@ module modsimpleice
       do i=2,i1
         rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg))) ! rain vs snow/graupel partitioning
         sgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnsg)/(tupsg-tdnsg))) ! snow versus graupel partitioning
-        if(qrmask(i,j,k).eqv..true.) then
+        if(qr(i,j,k) > qrmin) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! snow
           lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! graupel
@@ -253,7 +240,7 @@ module modsimpleice
       do i=2,i1
         rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg)))   ! rain vs snow/graupel partitioning
         sgratio(i,j,k)=0.
-        if(qrmask(i,j,k).eqv..true.) then
+        if(qr(i,j,k) > qrmin) then
           lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
           lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
           lambdag(i,j,k)=lambdas(i,j,k)
@@ -314,7 +301,7 @@ module modsimpleice
     use modglobal, only : i1,j1,kmax,rlv,cp,tmelt
     use modfields, only : ql0,exnf,rhof,tmp0
     use modmicrodata, only : betakessi, delt, l_berry, Nc_0, qli0, qll0, timekessl, &
-                             qcmask, qrp, qtpmcr, thlpmcr, ilratio
+                             qrp, qtpmcr, thlpmcr, ilratio, qcmin
     implicit none
     real(field_r) :: qll,qli,ddisp,lwc,autl,tc,times,auti,aut
     integer:: i,j,k
@@ -324,7 +311,7 @@ module modsimpleice
     do k=1,kmax
     do j=2,j1
     do i=2,i1
-        if (qcmask(i,j,k).eqv..true.) then
+        if (ql0(i,j,k) > qcmin) then
           ! ql partitioning
           qll=ql0(i,j,k)*ilratio(i,j,k)
           qli=ql0(i,j,k)-qll
@@ -346,7 +333,7 @@ module modsimpleice
       do k=1,kmax
       do j=2,j1
       do i=2,i1
-        if (qcmask(i,j,k).eqv..true.) then
+        if (ql0(i,j,k) > qcmin) then
           ! ql partitioning
           qll=ql0(i,j,k)*ilratio(i,j,k)
           qli=ql0(i,j,k)-qll
@@ -371,8 +358,8 @@ module modsimpleice
     use modmicrodata, only : ddg, ddr, dds, aag, aar, aas, bbg, bbr, bbs, delt, &
                              lambdag, lambdar, lambdas, ccgz, ccrz, ccsz, &
                              ceffgi, ceffgl, ceffri, ceffrl, ceffsi, ceffsl, &
-                             qrmask, qcmask, qr, qrp, qtpmcr, thlpmcr, &
-                             ilratio, rsgratio, sgratio
+                             qr, qrp, qtpmcr, thlpmcr, &
+                             ilratio, rsgratio, sgratio, qcmin, qrmin
     implicit none
     real(field_r) :: qll,qli,qrr,qrs,qrg,&
                      gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
@@ -382,8 +369,8 @@ module modsimpleice
     do k=1,kmax
     do j=2,j1
     do i=2,i1
-      if (qrmask(i,j,k).eqv..true.) then
-      if (qcmask(i,j,k).eqv..true.) then ! apply mask
+      if (qr(i,j,k) > qrmin) then
+      if (ql0(i,j,k) > qcmin) then ! apply mask
         ! ql partitioning
         qll=ql0(i,j,k)*ilratio(i,j,k)
         qli=ql0(i,j,k)-qll
@@ -419,8 +406,7 @@ module modsimpleice
     use modmicrodata, only : betag, betar, betas, ddg, ddr, dds, delt, &
                              n0rg, n0rr, n0rs, &
                              ccrz2, ccsz2, ccgz2, lambdag, lambdar, lambdas, &
-                             evapfactor, qrmask, qr, qrp, qtpmcr, thlpmcr, &
-                             qrmask
+                             evapfactor, qr, qrp, qtpmcr, thlpmcr, qrmin
     implicit none
 
     real(field_r) :: ssl,ssi,ventr,vents,ventg,&
@@ -431,7 +417,7 @@ module modsimpleice
     do k=1,kmax
     do j=2,j1
     do i=2,i1
-      if (qrmask(i,j,k).eqv..true.) then
+      if (qr(i,j,k) > qrmin) then
         ! saturation ratios
         ssl=(qt0(i,j,k)-ql0(i,j,k))/qvsl(i,j,k)
         ssi=(qt0(i,j,k)-ql0(i,j,k))/qvsi(i,j,k)
@@ -472,7 +458,7 @@ module modsimpleice
                              lambdag, lambdar, lambdas, &
                              ccgz, ccrz, ccsz, &
                              sgratio, rsgratio, &
-                             courantp, delt, qrmask
+                             courantp, delt, qrmin
     implicit none
     integer :: i,j,k,jn
     integer :: n_spl      !<  sedimentation time splitting loop
@@ -489,7 +475,7 @@ module modsimpleice
     do j=2,j1
     do i=2,i1
       qr_spl(i,j,k) = qr(i,j,k)
-      if (qrmask(i,j,k).eqv..true.) then
+      if (qr(i,j,k) > qrmin) then
         vtr=ccrz(k)*(gambd1r/gamb1r)/(lambdar(i,j,k)**ddr)  ! terminal velocity rain
         vts=ccsz(k)*(gambd1s/gamb1s)/(lambdas(i,j,k)**dds)  ! terminal velocity snow
         vtg=ccgz(k)*(gambd1g/gamb1g)/(lambdag(i,j,k)**ddg)  ! terminal velocity graupel
