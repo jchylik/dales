@@ -54,7 +54,7 @@ module modsimpleice
                              ilratio, rsgratio, sgratio, &
                              lambdar, lambdas, lambdag, &
                              qrmask, qcmask, precep, &
-                             ccrz, ccsz, ccgz, bbg, bbr, bbs, ddg, ddr, dds, iqr
+                             ccrz, ccsz, ccgz, ccrz2, ccsz2, ccgz2, bbg, bbr, bbs, ddg, ddr, dds, iqr
 
     use modglobal, only : ih,i1,jh,j1,k1,lacz_gamma
     use modtracers, only: add_tracer
@@ -85,6 +85,7 @@ module modsimpleice
     allocate(precep(2:i1,2:j1,k1))      ! precipitation for statistics
 
     allocate(ccrz(k1),ccsz(k1),ccgz(k1))
+    allocate(ccrz2(k1),ccsz2(k1),ccgz2(k1))
 
     nrp=0
     nr=0
@@ -111,12 +112,15 @@ module modsimpleice
                              ilratio,rsgratio,sgratio,lambdar,lambdas,lambdag, &
                              qrmask,qcmask, &
                              precep, &
-                             ccrz,ccsz,ccgz
+                             ccrz,ccsz,ccgz,&
+                             ccrz2,ccsz2,ccgz2
     implicit none
     deallocate(nr,nrp,qr,qrp,thlpmcr,qtpmcr,sed_qr,qr_spl,ilratio,rsgratio,sgratio,lambdar,lambdas,lambdag)
     deallocate(qrmask,qcmask)
     deallocate(precep)
     deallocate(ccrz,ccsz,ccgz)
+    deallocate(ccrz2,ccsz2,ccgz2)
+
   end subroutine exitsimpleice
 
 !> Calculates the microphysical source term.
@@ -131,6 +135,7 @@ module modsimpleice
                              n0rg, n0rr, n0rs, &
                              tuprsg, tupsg, tdnrsg, tdnsg, &
                              ccgz, ccrz, ccsz, &
+                             ccrz2, ccsz2, ccgz2, &
                              lambdag, lambdar, lambdas, &
                              l_graupel, l_rain, l_warm
     implicit none
@@ -153,9 +158,14 @@ module modsimpleice
 
     ! Density corrected fall speed parameters, see Tomita 2008
     do k=1,k1
-    ccrz(k)=ccr*(1.29/rhobf(k))**0.5
-    ccsz(k)=ccs*(1.29/rhobf(k))**0.5
-    ccgz(k)=ccg*(1.29/rhobf(k))**0.5
+       ccrz(k)=ccr*(1.29/rhobf(k))**0.5
+       ccsz(k)=ccs*(1.29/rhobf(k))**0.5
+       ccgz(k)=ccg*(1.29/rhobf(k))**0.5
+
+       ! these coefficients are used in evapdep - tabulated because of sqrt
+       ccrz2(k) = gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)
+       ccsz2(k) = gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)
+       ccgz2(k) = gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)
     end do
 
     do k=1,k1
@@ -408,7 +418,7 @@ module modsimpleice
     use modfields, only : qt0,ql0,exnf,rhof,tmp0,qvsl,qvsi,esl
     use modmicrodata, only : betag, betar, betas, ddg, ddr, dds, delt, &
                              n0rg, n0rr, n0rs, &
-                             ccgz, ccrz, ccsz, lambdag, lambdar, lambdas, &
+                             ccrz2, ccsz2, ccgz2, lambdag, lambdar, lambdas, &
                              evapfactor, qrmask, qr, qrp, qtpmcr, thlpmcr, &
                              qrmask
     implicit none
@@ -430,9 +440,12 @@ module modsimpleice
         !F  = 0.78 + 0.27 Re^1/2  for raindrops
         !F  = 0.65 + 0.39 Re^1/2  for ice particles
         !for the ventilation factor F
-        ventr=.78*n0rr/lambdar(i,j,k)**2 + gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)*lambdar(i,j,k)**(-2.5-0.5*ddr)
-        vents=.65*n0rs/lambdas(i,j,k)**2 + gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
-        ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
+        !ventr=.78*n0rr/lambdar(i,j,k)**2 + gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)*lambdar(i,j,k)**(-2.5-0.5*ddr)
+        !vents=.65*n0rs/lambdas(i,j,k)**2 + gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
+        !ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
+        ventr=.78*n0rr/lambdar(i,j,k)**2 + ccrz2(k)*lambdar(i,j,k)**(-2.5-0.5*ddr)
+        vents=.65*n0rs/lambdas(i,j,k)**2 + ccsz2(k)*lambdas(i,j,k)**(-2.5-0.5*dds)
+        ventg=.78*n0rg/lambdag(i,j,k)**2 + ccgz2(k)*lambdag(i,j,k)**(-2.5-0.5*ddg)
         thfun=1.e-7/(2.2*tmp0(i,j,k)/esl(i,j,k)+2.2e2/tmp0(i,j,k))  ! thermodynamic function
         evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1)*ventr*thfun
         evapdeps=(4.*pi/(betas*rhof(k)))*(ssi-1)*vents*thfun
