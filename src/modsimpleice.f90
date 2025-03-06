@@ -33,19 +33,19 @@ module modsimpleice
   implicit none
   private
   public initsimpleice, exitsimpleice, simpleice
-  real :: gamb1r
-  real :: gambd1r
-  real :: gamb1s
-  real :: gambd1s
-  real :: gamb1g
-  real :: gambd1g
-  real :: gam2dr
-  real :: gam2ds
-  real :: gam2dg
-  real :: gammaddr3
-  real :: gammadds3
-  real :: gammaddg3
-  real(field_r):: eps_lambda, eps_accr
+  real(field_r) :: gamb1r
+  real(field_r) :: gambd1r
+  real(field_r) :: gamb1s
+  real(field_r) :: gambd1s
+  real(field_r) :: gamb1g
+  real(field_r) :: gambd1g
+  real(field_r) :: gam2dr
+  real(field_r) :: gam2ds
+  real(field_r) :: gam2dg
+  real(field_r) :: gammaddr3
+  real(field_r) :: gammadds3
+  real(field_r) :: gammaddg3
+  real(field_r) :: eps_lambda, eps_accr
   contains
 
 !> Initializes and allocates the arrays
@@ -89,12 +89,12 @@ module modsimpleice
     nr=0
     precep=0
 
-     gamb1r=lacz_gamma(bbr+1)
-     gambd1r=lacz_gamma(bbr+ddr+1)
-     gamb1s=lacz_gamma(bbs+1)
-     gambd1s=lacz_gamma(bbs+dds+1)
-     gamb1g=lacz_gamma(bbg+1)
-     gambd1g=lacz_gamma(bbg+ddg+1)
+     gamb1r=lacz_gamma(bbr+1.0)
+     gambd1r=lacz_gamma(bbr+ddr+1.0)
+     gamb1s=lacz_gamma(bbs+1.0)
+     gambd1s=lacz_gamma(bbs+dds+1.0)
+     gamb1g=lacz_gamma(bbg+1.0)
+     gambd1g=lacz_gamma(bbg+ddg+1.0)
      gam2dr=lacz_gamma(2.5+0.5*ddr)
      gam2ds=lacz_gamma(2.5+0.5*dds)
      gam2dg=lacz_gamma(2.5+0.5*ddg)
@@ -145,12 +145,12 @@ module modsimpleice
     eps_accr   = qrmin  ! was 1e-9
 
     ! used to check on negative qr and nr
-    qrsum=0.
-    qrsmall=0.
+    qrsum=0
+    qrsmall=0
     ! reset microphysics tendencies
-    qrp=0.
-    thlpmcr=0.
-    qtpmcr=0.
+    qrp=0
+    thlpmcr=0
+    qtpmcr=0
 
     ! Density corrected fall speed parameters, see Tomita 2008
     do k=1,k1
@@ -170,20 +170,16 @@ module modsimpleice
       ! initialise qr
       qr(i,j,k)= sv0(i,j,k,iqr)
       ! check if we are not throwing away too much rain
-      if (l_rain) then
-        qrsum = qrsum+qr(i,j,k)
-        if (qr(i,j,k) <= qrmin) then
-          if(qr(i,j,k)<0.) then
-          qrsmall = qrsmall-qr(i,j,k)
-          qr(i,j,k)=0.
-          end if
-        endif
-      endif
+      qrsum = qrsum+qr(i,j,k)
+      if(qr(i,j,k)<0) then
+         qrsmall = qrsmall-qr(i,j,k)
+         qr(i,j,k)=0
+      end if
     enddo
     enddo
     enddo
 
-    if (qrsmall > 0.000001*qrsum) then
+    if (qrsmall > 0.000001_field_r*qrsum) then
       write(*,*)'amount of neg. qr thrown away is too high  ',timee,' sec'
     end if
 
@@ -213,7 +209,7 @@ module modsimpleice
         rsgratio(i,j,k)=1  ! rain vs snow/graupel partitioning
         sgratio(i,j,k)=0   ! snow versus graupel partitioning
         if(qr(i,j,k) > qrmin) then
-          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
+          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)+eps_lambda)))**(1/(1+bbr)) ! lambda rain
           lambdas(i,j,k)=lambdar(i,j,k) ! lambda snow
           lambdag(i,j,k)=lambdar(i,j,k) ! lambda graupel
         end if
@@ -227,9 +223,9 @@ module modsimpleice
         rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg))) ! rain vs snow/graupel partitioning
         sgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnsg)/(tupsg-tdnsg))) ! snow versus graupel partitioning
         if(qr(i,j,k) > qrmin) then
-          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! snow
-          lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! graupel
+          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1/(1+bbr)) ! lambda rain
+          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1/(1+bbs)) ! snow
+          lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1/(1+bbg)) ! graupel
         endif
       enddo
       enddo
@@ -239,10 +235,10 @@ module modsimpleice
       do j=2,j1
       do i=2,i1
         rsgratio(i,j,k)=max(0._field_r,min(1._field_r,(tmp0(i,j,k)-tdnrsg)/(tuprsg-tdnrsg)))   ! rain vs snow/graupel partitioning
-        sgratio(i,j,k)=0.
+        sgratio(i,j,k)=0
         if(qr(i,j,k) > qrmin) then
-          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
+          lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1/(1+bbr)) ! lambda rain
+          lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr(i,j,k)*(1-rsgratio(i,j,k))+eps_lambda)))**(1/(1+bbs)) ! lambda snow
           lambdag(i,j,k)=lambdas(i,j,k)
         end if
       enddo
@@ -316,8 +312,8 @@ module modsimpleice
           qll=ql0(i,j,k)*ilratio(i,j,k)
           qli=ql0(i,j,k)-qll
           ddisp=0.146-5.964e-2*log(Nc_0/2.e9) ! Relative dispersion coefficient for Berry autoconversion
-          lwc=1.e3*rhof(k)*qll ! Liquid water content in g/kg
-          autl=1./rhof(k)*1.67e-5*lwc*lwc/(5. + .0366*Nc_0/(1.e6*ddisp*(lwc+eps_lambda)))
+          lwc=1.e3_field_r*rhof(k)*qll ! Liquid water content in g/kg
+          autl=1/rhof(k)*1.67e-5_field_r*lwc*lwc/(5 + .0366_field_r*Nc_0/(1.e6_field_r*ddisp*(lwc+eps_lambda)))
           tc=tmp0(i,j,k)-tmelt ! Temperature wrt melting point
           times=min(1.e3,(3.56*tc+106.7)*tc+1.e3) ! Time scale for ice autoconversion
           auti=qli/times
@@ -337,9 +333,9 @@ module modsimpleice
           ! ql partitioning
           qll=ql0(i,j,k)*ilratio(i,j,k)
           qli=ql0(i,j,k)-qll
-          autl=max(0.,timekessl*(qll-qll0))
+          autl=max(0._field_r,timekessl*(qll-qll0))
           tc=tmp0(i,j,k)-tmelt
-          auti=max(0.,betakessi*exp(0.025*tc)*(qli-qli0))
+          auti=max(0._field_r,betakessi*exp(0.025_field_r*tc)*(qli-qli0))
           aut = min(autl + auti,ql0(i,j,k)/delt)
           qrp(i,j,k) = qrp(i,j,k)+aut
           qtpmcr(i,j,k) = qtpmcr(i,j,k)-aut
@@ -376,15 +372,15 @@ module modsimpleice
         qli=ql0(i,j,k)-qll
         ! qr partitioning
         qrr=qr(i,j,k)*rsgratio(i,j,k)
-        qrs=qr(i,j,k)*(1.-rsgratio(i,j,k))*(1.-sgratio(i,j,k))
-        qrg=qr(i,j,k)*(1.-rsgratio(i,j,k))*sgratio(i,j,k)
+        qrs=qr(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))
+        qrg=qr(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)
         ! collection of cloud water by rain etc.
-        gaccrl=pi/4.*ccrz(k)*ceffrl*rhof(k)*qll*qrr*lambdar(i,j,k)**(bbr-2.-ddr)*gammaddr3/(aar*gamb1r)
-        gaccsl=pi/4.*ccsz(k)*ceffsl*rhof(k)*qll*qrs*lambdas(i,j,k)**(bbs-2.-dds)*gammadds3/(aas*gamb1s)
-        gaccgl=pi/4.*ccgz(k)*ceffgl*rhof(k)*qll*qrg*lambdag(i,j,k)**(bbg-2.-ddg)*gammaddg3/(aag*gamb1g)
-        gaccri=pi/4.*ccrz(k)*ceffri*rhof(k)*qli*qrr*lambdar(i,j,k)**(bbr-2.-ddr)*gammaddr3/(aar*gamb1r)
-        gaccsi=pi/4.*ccsz(k)*ceffsi*rhof(k)*qli*qrs*lambdas(i,j,k)**(bbs-2.-dds)*gammadds3/(aas*gamb1s)
-        gaccgi=pi/4.*ccgz(k)*ceffgi*rhof(k)*qli*qrg*lambdag(i,j,k)**(bbg-2.-ddg)*gammaddg3/(aag*gamb1g)
+        gaccrl=pi/4*ccrz(k)*ceffrl*rhof(k)*qll*qrr*lambdar(i,j,k)**(bbr-2-ddr)*gammaddr3/(aar*gamb1r)
+        gaccsl=pi/4*ccsz(k)*ceffsl*rhof(k)*qll*qrs*lambdas(i,j,k)**(bbs-2-dds)*gammadds3/(aas*gamb1s)
+        gaccgl=pi/4*ccgz(k)*ceffgl*rhof(k)*qll*qrg*lambdag(i,j,k)**(bbg-2-ddg)*gammaddg3/(aag*gamb1g)
+        gaccri=pi/4*ccrz(k)*ceffri*rhof(k)*qli*qrr*lambdar(i,j,k)**(bbr-2-ddr)*gammaddr3/(aar*gamb1r)
+        gaccsi=pi/4*ccsz(k)*ceffsi*rhof(k)*qli*qrs*lambdas(i,j,k)**(bbs-2-dds)*gammadds3/(aas*gamb1s)
+        gaccgi=pi/4*ccgz(k)*ceffgi*rhof(k)*qli*qrg*lambdag(i,j,k)**(bbg-2-ddg)*gammaddg3/(aag*gamb1g)
         accr=(gaccrl+gaccri)*qrr/(qrr+eps_accr)
         accs=(gaccsl+gaccsi)*qrs/(qrs+eps_accr)
         accg=(gaccgl+gaccgi)*qrg/(qrg+eps_accr)
@@ -429,13 +425,13 @@ module modsimpleice
         !ventr=.78*n0rr/lambdar(i,j,k)**2 + gam2dr*.27*n0rr*sqrt(ccrz(k)/2.e-5)*lambdar(i,j,k)**(-2.5-0.5*ddr)
         !vents=.65*n0rs/lambdas(i,j,k)**2 + gam2ds*.39*n0rs*sqrt(ccsz(k)/2.e-5)*lambdas(i,j,k)**(-2.5-0.5*dds)
         !ventg=.78*n0rg/lambdag(i,j,k)**2 + gam2dg*.27*n0rg*sqrt(ccgz(k)/2.e-5)*lambdag(i,j,k)**(-2.5-0.5*ddg)
-        ventr=.78*n0rr/lambdar(i,j,k)**2 + ccrz2(k)*lambdar(i,j,k)**(-2.5-0.5*ddr)
-        vents=.65*n0rs/lambdas(i,j,k)**2 + ccsz2(k)*lambdas(i,j,k)**(-2.5-0.5*dds)
-        ventg=.78*n0rg/lambdag(i,j,k)**2 + ccgz2(k)*lambdag(i,j,k)**(-2.5-0.5*ddg)
-        thfun=1.e-7/(2.2*tmp0(i,j,k)/esl(i,j,k)+2.2e2/tmp0(i,j,k))  ! thermodynamic function
-        evapdepr=(4.*pi/(betar*rhof(k)))*(ssl-1)*ventr*thfun
-        evapdeps=(4.*pi/(betas*rhof(k)))*(ssi-1)*vents*thfun
-        evapdepg=(4.*pi/(betag*rhof(k)))*(ssi-1)*ventg*thfun
+        ventr=.78_field_r*n0rr/lambdar(i,j,k)**2 + ccrz2(k)*lambdar(i,j,k)**(-2.5_field_r-0.5_field_r*ddr)
+        vents=.65_field_r*n0rs/lambdas(i,j,k)**2 + ccsz2(k)*lambdas(i,j,k)**(-2.5_field_r-0.5_field_r*dds)
+        ventg=.78_field_r*n0rg/lambdag(i,j,k)**2 + ccgz2(k)*lambdag(i,j,k)**(-2.5_field_r-0.5_field_r*ddg)
+        thfun=1.e-7_field_r/(2.2_field_r*tmp0(i,j,k)/esl(i,j,k)+2.2e2_field_r/tmp0(i,j,k))  ! thermodynamic function
+        evapdepr=(4*pi/(betar*rhof(k)))*(ssl-1)*ventr*thfun
+        evapdeps=(4*pi/(betas*rhof(k)))*(ssi-1)*vents*thfun
+        evapdepg=(4*pi/(betag*rhof(k)))*(ssi-1)*ventg*thfun
         ! total growth by deposition and evaporation
         ! limit with qr and ql after accretion and autoconversion
         devap= max(min(evapfactor*(evapdepr+evapdeps+evapdepg),ql0(i,j,k)/delt+qrp(i,j,k)),-qr(i,j,k)/delt-qrp(i,j,k))
@@ -511,9 +507,9 @@ module modsimpleice
         do i=2,i1
           if (qr_spl(i,j,k) > qrmin) then
             ! re-evaluate lambda
-            lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr_spl(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1./(1.+bbr)) ! lambda rain
-            lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1./(1.+bbs)) ! lambda snow
-            lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1./(1.+bbg)) ! lambda graupel
+            lambdar(i,j,k)=(aar*n0rr*gamb1r/(rhof(k)*(qr_spl(i,j,k)*rsgratio(i,j,k)+eps_lambda)))**(1/(1+bbr)) ! lambda rain
+            lambdas(i,j,k)=(aas*n0rs*gamb1s/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*(1-sgratio(i,j,k))+eps_lambda)))**(1/(1+bbs)) ! lambda snow
+            lambdag(i,j,k)=(aag*n0rg*gamb1g/(rhof(k)*(qr_spl(i,j,k)*(1-rsgratio(i,j,k))*sgratio(i,j,k)+eps_lambda)))**(1/(1+bbg)) ! lambda graupel
             vtr=ccrz(k)*(gambd1r/gamb1r)/(lambdar(i,j,k)**ddr)  ! terminal velocity rain
             vts=ccsz(k)*(gambd1s/gamb1s)/(lambdas(i,j,k)**dds)  ! terminal velocity snow
             vtg=ccgz(k)*(gambd1g/gamb1g)/(lambdag(i,j,k)**ddg)  ! terminal velocity graupel
