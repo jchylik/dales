@@ -33,6 +33,7 @@ module modsimpleice
   implicit none
   private
   public initsimpleice, exitsimpleice, simpleice
+  character(len=*), parameter :: modname = "modsimpleice"
   real(field_r) :: gamb1r
   real(field_r) :: gambd1r
   real(field_r) :: gamb1s
@@ -135,11 +136,12 @@ module modsimpleice
                              lambdag, lambdar, lambdas, &
                              l_graupel, l_rain, l_warm
     implicit none
+    character(len=*), parameter :: routine = modname//"/simpleice"
     integer:: i,j,k
     real(field_r):: qrsmall, qrsum, qr_cor
 
-    call timer_tic('modsimpleice', 1)
-    call timer_tic('modsimpleice/setup', 1)
+    call timer_tic(routine, 1)
+    call timer_tic(routine//'/setup', 1)
     delt = rdt/ (4. - dble(rk3step))
     eps_lambda = qrmin  ! was 1e-6
     eps_accr   = qrmin  ! was 1e-9
@@ -245,8 +247,7 @@ module modsimpleice
       enddo
       enddo
     endif
-    call timer_toc('modsimpleice/setup')
-
+    call timer_toc(routine//'/setup')
     if (l_rain) then
       call bulkmicrotend
       call autoconvert
@@ -259,7 +260,7 @@ module modsimpleice
       call bulkmicrotend
     endif
 
-    call timer_tic('modsimpleice/finalize', 1)
+    call timer_tic(routine//'/finalize', 1)
 
 
     ! cap the microphysics tendency so that it doesn't take qr below 0
@@ -289,8 +290,8 @@ module modsimpleice
       enddo
     enddo
 
-    call timer_toc('modsimpleice/finalize')
-    call timer_toc('modsimpleice')
+    call timer_toc(routine//'/finalize')
+    call timer_toc(routine)
   end subroutine simpleice
 
   subroutine autoconvert
@@ -299,10 +300,11 @@ module modsimpleice
     use modmicrodata, only : betakessi, delt, l_berry, Nc_0, qli0, qll0, timekessl, &
                              qrp, qtpmcr, thlpmcr, ilratio, qcmin
     implicit none
+    character(len=*), parameter :: routine = modname//"/autoconvert"
     real(field_r) :: qll,qli,ddisp,lwc,autl,tc,times,auti,aut
     integer:: i,j,k
 
-    call timer_tic('modsimpleice/autoconvert', 1)
+    call timer_tic(routine, 1)
     if(l_berry.eqv..true.) then ! Berry/Hsie autoconversion
     do k=1,kmax
     do j=2,j1
@@ -345,7 +347,7 @@ module modsimpleice
       enddo
       enddo
     endif
-    call timer_toc('modsimpleice/autoconvert')
+    call timer_toc(routine)
   end subroutine autoconvert
 
   subroutine accrete
@@ -357,11 +359,12 @@ module modsimpleice
                              qr, qrp, qtpmcr, thlpmcr, &
                              ilratio, rsgratio, sgratio, qcmin, qrmin
     implicit none
+    character(len=*), parameter :: routine = modname//"/accrete"
     real(field_r) :: qll,qli,qrr,qrs,qrg,&
                      gaccrl,gaccsl,gaccgl,gaccri,gaccsi,gaccgi,accr,accs,accg,acc
     integer:: i,j,k
 
-    call timer_tic('modsimpleice/accrete', 1)
+    call timer_tic(routine, 1)
     do k=1,kmax
     do j=2,j1
     do i=2,i1
@@ -393,7 +396,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-    call timer_toc('modsimpleice/accrete')
+    call timer_toc(routine)
   end subroutine accrete
 
   subroutine evapdep
@@ -404,12 +407,12 @@ module modsimpleice
                              ccrz2, ccsz2, ccgz2, lambdag, lambdar, lambdas, &
                              evapfactor, qr, qrp, qtpmcr, thlpmcr, qrmin
     implicit none
-
+    character(len=*), parameter :: routine = modname//"/evapdep"
     real(field_r) :: ssl,ssi,ventr,vents,ventg,&
                      thfun,evapdepr,evapdeps,evapdepg,devap
     integer:: i,j,k
 
-    call timer_tic('modsimpleice/evapdep', 1)
+    call timer_tic(routine, 1)
     do k=1,kmax
     do j=2,j1
     do i=2,i1
@@ -442,7 +445,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-    call timer_toc('modsimpleice/evapdep')
+    call timer_toc(routine)
   end subroutine evapdep
 
   subroutine precipitate
@@ -456,11 +459,12 @@ module modsimpleice
                              sgratio, rsgratio, &
                              courantp, delt, qrmin
     implicit none
+    character(len=*), parameter :: routine = modname//"/precipitate"
     integer :: i,j,k,jn
     integer :: n_spl      !<  sedimentation time splitting loop
     real(field_r) :: dt_spl,wfallmax,vtr,vts,vtg,vtf
 
-    call timer_tic('modsimpleice/precipitate', 1)
+    call timer_tic(routine, 1)
     wfallmax = 9.9
     n_spl = ceiling(wfallmax*delt/(minval(dzf)*courantp))
     dt_spl = delt/real(n_spl) !fixed time step
@@ -543,7 +547,7 @@ module modsimpleice
     enddo
     enddo
     enddo
-    call timer_toc('modsimpleice/precipitate')
+    call timer_toc(routine)
   end subroutine precipitate
 
 end module modsimpleice
