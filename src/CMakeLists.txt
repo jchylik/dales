@@ -76,7 +76,6 @@ set( dales_srcs
 	modsamptend.f90
 	modsimpleice.f90
 	modsimpleice2.f90
-	modsimpleicestat.f90
 	modstartup.f90
 	modstat_nc.f90
 	modstattend.f90
