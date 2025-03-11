@@ -183,16 +183,17 @@ set( rrtmgp_srcs
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-kernels/accel/mo_rte_solver_kernels.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-kernels/mo_rte_util_array.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-kernels/mo_fluxes_broadband_kernels.F90
+	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-kernels/mo_rte_kind.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_fluxes.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_optical_props.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_config.F90
-	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_kind.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_lw.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_sw.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_source_functions.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rte-frontend/mo_rte_util_array_validation.F90
 	# RRTMGP
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-kernels/accel/mo_gas_optics_rrtmgp_kernels.F90
+	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-kernels/mo_cloud_optics_rrtmgp_kernels.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-frontend/mo_gas_optics_rrtmgp.F90
 	${PROJECT_SOURCE_DIR}/external/RTE-RRTMGP/rrtmgp-frontend/mo_cloud_optics_rrtmgp.F90
 	# Gas optics
