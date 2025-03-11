@@ -35,6 +35,7 @@ module modradrte_rrtmgp
   use mo_source_functions,    only: ty_source_func_lw
   use mo_fluxes,              only: ty_fluxes_broadband
   use mo_gas_concentrations,  only: ty_gas_concs
+  use mo_rte_kind,            only: wl
 
   implicit none
 
@@ -73,7 +74,7 @@ contains
   subroutine init_radrte_rrtmgp
     use mo_load_coefficients,  only: load_and_init
     use mo_load_cloud_coefficients, &
-                               only: load_cld_lutcoeff, load_cld_padecoeff
+                               only: load_cld_lutcoeff
     use mo_rte_config,         only: rte_config_checks
 
     ! DALES modules
@@ -245,11 +246,7 @@ contains
       end select
 
       ! Load cloud property data
-      if(usepade) then
-        call load_cld_padecoeff(cloud_optics_lw, cloud_optics_file_lw)
-      else
-        call load_cld_lutcoeff (cloud_optics_lw, cloud_optics_file_lw)
-      endif
+      call load_cld_lutcoeff (cloud_optics_lw, cloud_optics_file_lw)
       call stop_on_err(cloud_optics_lw%set_ice_roughness(2))
 
       ! Initialize cloud optical properties
@@ -297,11 +294,7 @@ contains
       end select
 
       ! Load cloud property data
-      if(usepade) then
-        call load_cld_padecoeff(cloud_optics_sw, cloud_optics_file_sw)
-      else
-        call load_cld_lutcoeff (cloud_optics_sw, cloud_optics_file_sw)
-      endif
+      call load_cld_lutcoeff (cloud_optics_sw, cloud_optics_file_sw)
       call stop_on_err(cloud_optics_sw%set_ice_roughness(2))
 
       ! Initialize cloud optical properties
@@ -327,7 +320,7 @@ contains
       endif
     endif
 
-    call rte_config_checks(.false.)
+    call rte_config_checks(.false._wl)
 
     initialized = .true.
 
@@ -338,7 +331,7 @@ contains
     use mo_rte_sw,             only: rte_sw
     implicit none
 
-    logical                 :: top_at_1 = .false., sunUp = .false.
+    logical                 :: sunUp = .false.
     integer                 :: ibatch
 
     if(.not.initialized) call init_radrte_rrtmgp
@@ -361,7 +354,6 @@ contains
         ! Solve clear sky radiation transport if required
         if(doclearsky) then
           call stop_on_err(rte_lw(atmos_lw, & ! optical properties (in)
-                                  top_at_1, & ! Is the top of the domain at index 1? (in)
                                   sources_lw, & ! source function (in)
                                   emis, & ! emissivity at surface (in)
                                   fluxes_cs_lw)) ! fluxes (W/m2, inout)
@@ -380,7 +372,6 @@ contains
         ! Solve radiation transport
         call timer_tic('modradrte_rrtmgp/lwrtesolve', 0)
         call stop_on_err(rte_lw(atmos_lw, & ! optical properties (in)
-                                top_at_1, & ! Is the top of the domain at index 1? (in)
                                 sources_lw, & ! source function (in)
                                 emis, & ! emissivity at surface (in)
                                 fluxes_lw)) ! fluxes (W/m2, inout)
@@ -405,7 +396,6 @@ contains
           ! Solve clear sky radiation transport if required
           if(doclearsky) then
             call stop_on_err(rte_sw(atmos_sw, & ! optical properties (in)
-                                    top_at_1, & ! Is the top of the domain at index 1? (in)
                                     solarZenithAngleCos, & ! cosine of the solar zenith angle (in)
                                     inc_sw_flux, & ! solar incoming flux (in)
                                     sfc_alb_dir, sfc_alb_dif, & ! surface albedos, direct and diffuse (in)
@@ -426,7 +416,6 @@ contains
           ! Solve radiation transport
           call timer_tic('modradrte_rrtmgp/swrtesolve', 0)
           call stop_on_err(rte_sw(atmos_sw, & ! optical properties (in)
-                                  top_at_1, & ! Is the top of the domain at index 1? (in)
                                   solarZenithAngleCos, & ! cosine of the solar zenith angle (in)
                                   inc_sw_flux, & ! solar incoming flux (in)
                                   sfc_alb_dir, sfc_alb_dif, & ! surface albedos, direct and diffuse (in)
