@@ -591,6 +591,10 @@ contains
 
              if(iceRe(icol,k).lt.10.) iceRe(icol,k) = 10.
              if(iceRe(icol,k).gt.180.) iceRe(icol,k) = 180.
+
+            ! Ice optical properties in RRTMGP LUTs are given as a function of effective diameter
+            !
+            iceRe(icol,k) = iceRe(icol,k) * 2
           endif
 
         enddo
