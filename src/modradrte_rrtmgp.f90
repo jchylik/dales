@@ -589,12 +589,13 @@ contains
              B_function =  -2 + 0.001 *(273.-layerT(icol,k))**1.5 * log10(qci*rhof(k)/IWC0) !Eq. 14 Wyser 1998
              iceRe(icol,k) = 377.4 + 203.3 * B_function + 37.91 * B_function**2 + 2.3696 * B_function**3 !micrometer, Wyser 1998, Eq. 35
 
-             if(iceRe(icol,k).lt.10.) iceRe(icol,k) = 10.
-             if(iceRe(icol,k).gt.180.) iceRe(icol,k) = 180.
-
             ! Ice optical properties in RRTMGP LUTs are given as a function of effective diameter
             !
             iceRe(icol,k) = iceRe(icol,k) * 2
+
+             if(iceRe(icol,k).lt.10.) iceRe(icol,k) = 10.
+             if(iceRe(icol,k).gt.180.) iceRe(icol,k) = 180.
+
           endif
 
         enddo
