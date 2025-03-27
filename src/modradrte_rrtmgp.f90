@@ -87,8 +87,8 @@ contains
     integer                 :: k, npatch, ierr(3)=0
     character(len=256)      :: k_dist_file_lw = "rrtmgp-gas-lw-g128.nc"
     character(len=256)      :: k_dist_file_sw = "rrtmgp-gas-sw-g112.nc"
-    character(len=256)      :: cloud_optics_file_lw = "rrtmgp-clouds-lw.nc"
-    character(len=256)      :: cloud_optics_file_sw = "rrtmgp-clouds-sw.nc"
+    character(len=256)      :: cloud_optics_file_lw = "rrtmgp-clouds-lw-bnd.nc"
+    character(len=256)      :: cloud_optics_file_sw = "rrtmgp-clouds-sw-bnd.nc"
 
     ! Reading sounding (patch above Dales domain), only once
     call readSounding(initial_presh(k1)/100.,npatch_start,npatch_end)
