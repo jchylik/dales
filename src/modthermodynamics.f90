@@ -179,6 +179,8 @@ contains
 
     implicit none
     integer :: i, j, k
+
+    !$acc parallel loop collapse(3) default(present) async
     do k = 1,k1
        do j = 2,j1
           do i = 2,i1
