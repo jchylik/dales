@@ -1685,6 +1685,10 @@ subroutine init_heterogeneous_nc
     tile(nlu)%b_r = 0
     tile(nlu)%gD = 0
     tile(nlu)%tskin = 0
+    tile(nlu)%H = 0
+    tile(nlu)%LE = 0
+    tile(nlu)%G = 0
+
 
     ! 2D surface fields
     do ilu=1,nlu-1
@@ -1700,6 +1704,9 @@ subroutine init_heterogeneous_nc
       tile(ilu)%b_r = 0
       tile(ilu)%gD = 0
       tile(ilu)%tskin = 0
+      tile(ilu)%H = 0
+      tile(ilu)%LE = 0
+      tile(ilu)%G = 0
 
       write(*,*) 'reading variables for LU type: ', trim(tile(ilu)%lushort)
       ! LU cover
