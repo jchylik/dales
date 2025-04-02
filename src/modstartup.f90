@@ -726,7 +726,7 @@ contains
 
       ! Initialize fields
       if(lopenbc .and. linithetero) then! Openboundaries with heterogeneous initialisation
-        call openboundary_initfields()
+        call openboundary_initfields(tracer_prop)
         do j = 1,j2
           do i = 1,i2
             wm(i,j,1) = 0.
@@ -828,7 +828,7 @@ contains
         call initsurf_user
       end select
       if(lopenbc) then
-        call openboundary_readboundary
+        call openboundary_readboundary(tracer_prop)
         call openboundary_ghost
       endif
 
@@ -978,7 +978,7 @@ contains
 
       call baseprofs !call baseprofs
       if(lopenbc) then
-        call openboundary_readboundary
+        call openboundary_readboundary(tracer_prop)
       endif
 
 #if defined(_OPENACC)

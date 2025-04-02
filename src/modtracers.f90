@@ -33,6 +33,7 @@ module modtracers
   use go,             only: goSplitString_s
   use modstat_nc
   use utils
+  use modtracer_type, only: T_tracer  ! Use the type from modtracer_type
 
   implicit none
 
@@ -47,27 +48,11 @@ module modtracers
   public :: allocate_tracers
   public :: exittracers
   public :: tracer_profs_from_netcdf
-
-  public :: tracer_prop
   public :: nsv_user
-
-  type T_tracer
-    character(len=16) :: tracname           !< Tracer name
-    character(len=64) :: traclong           !< Tracer long name
-    character(len=16) :: unit = '-'         !< Tracer unit
-    real(field_r)     :: molar_mass = -999. !< Molecular mass of tracer (g mol-1)
-    integer           :: trac_idx = 1       !< Tracer index in sv0, svm, svp
-    logical           :: lemis = .false.    !< Boolean if tracer is emitted 
-    logical           :: lreact = .false.   !< Boolean if tracer is reactive
-    logical           :: ldep = .false.     !< Boolean if tracer is deposited
-    logical           :: lags = .false.     !< Boolean if in A-gs
-    logical           :: lmicro = .false.   !< Boolean if in cloud microphysics
-    real(field_r)     :: wsvsurf = 0        !< Kinematic surface flux (- m/s)
-  end type T_tracer
 
   integer, protected :: nsv_user !< Number of user-provided tracers
 
-  type(T_tracer), allocatable, protected :: tracer_prop(:) !< List of tracers
+  type(T_tracer), allocatable, public, protected :: tracer_prop(:) !< List of tracers
 
 contains
 
@@ -133,6 +118,8 @@ contains
     integer                     :: s
     character(len=1024)         :: message = ''
     type(T_tracer), allocatable :: tmp(:)
+    
+    
 
     ! Check if we have already allocated memory
     if (allocated(sv0)) then
