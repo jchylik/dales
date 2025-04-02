@@ -23,7 +23,7 @@
 !
 
 module modemission
-
+use modprecision, only: field_r
 use modemisdata
 use modtracers,       only : tracer_prop
 
@@ -447,7 +447,6 @@ contains
     logical :: points_exist
 
     ! Synchronization variables
-    integer :: local_npoints, global_max_npoints
     integer :: dummy_var = 0  ! Used for implicit synchronization
     character(256) :: filename = 'pointsources.____________.x___.y___.nc'
     character(512) :: fullpath
@@ -476,11 +475,9 @@ contains
 
         call check(nf90_close(ncid))
 
-        local_npoints = npoints
-        write(6,*) 'Found point sources: ', filename, ' npoints: ', npoints
+        write(6,*) 'Found point sources: ', trim(filename), ' npoints: ', npoints
     else
-        local_npoints = 0
-        write(6,*) 'No point sources: ', filename, ' NONE'
+        write(6,*) 'No point sources: ', trim(filename), ' NONE'
     end if
 
 
@@ -595,7 +592,7 @@ contains
                     point_source_data(ipoint,5,1), &       ! Source volumetric flow rate
                     point_source_data(ipoint,3,1), &       ! Source stack height
 
-                    izt, plume_top_fraction, &  		! This index should be in full levels
+                    izt, plume_top_fraction, &          ! This index should be in full levels
                     izb, plume_bottom_fraction, emis_b) ! plume top/bottom include the partially filled levels
 
 
@@ -750,7 +747,7 @@ contains
     implicit none
 
     real, intent(in)  :: Ts, hs, vs, emis_b
-    real, dimension(kmax), intent(in) :: Ta, U
+    real(field_r), dimension(kmax), intent(in) :: Ta, U
     integer, intent(out) :: iztop, izbottom
     real,    intent(out) :: ztop_frac, zbottom_frac
 
