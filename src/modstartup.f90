@@ -1025,9 +1025,44 @@ contains
           end if
           read (ifinput,'(a80)') chmess
           read (ifinput,'(a80)') chmess
-          do  k=1,kmax
-            read (ifinput,*) &
-                height (k), &
+
+          ! if coriolis force, read in 2nd and 3rd columns as ug and vg
+          if (lcoriol) then 
+            do  k=1,kmax
+              read (ifinput,*) &
+                  height (k), &
+                  ug     (k), &
+                  vg     (k), &
+                  wfls   (k), &
+                  dqtdxls(k), &
+                  dqtdyls(k), &
+                  dqtdtls(k), &
+                  thlpcar(k)
+            end do
+          else ! otherwhise read in same columns as pressure gradient
+            do  k=1,kmax
+              read (ifinput,*) &
+                  height (k), &
+                  dpdxl  (k), &
+                  dpdyl  (k), &
+                  wfls   (k), &
+                  dqtdxls(k), &
+                  dqtdyls(k), &
+                  dqtdtls(k), &
+                  thlpcar(k)
+            end do
+          end if 
+          close(ifinput)
+        end if
+
+      end if
+
+      if (lcoriol) then
+        write(6,*) ' height u_geo   v_geo    subs     ' &
+                  ,'   dqtdx      dqtdy        dqtdtls     thl_rad '
+        do k=kmax,1,-1
+          write (6,'(3f7.1,5e12.4)') &
+                zf     (k), &
                 ug     (k), &
                 vg     (k), &
                 wfls   (k), &
@@ -1035,26 +1070,22 @@ contains
                 dqtdyls(k), &
                 dqtdtls(k), &
                 thlpcar(k)
-          end do
-          close(ifinput)
-        end if
-
-      end if
-
-      write(6,*) ' height u_geo   v_geo    subs     ' &
-                ,'   dqtdx      dqtdy        dqtdtls     thl_rad '
-      do k=kmax,1,-1
-        write (6,'(3f7.1,5e12.4)') &
-              zf     (k), &
-              ug     (k), &
-              vg     (k), &
-              wfls   (k), &
-              dqtdxls(k), &
-              dqtdyls(k), &
-              dqtdtls(k), &
-              thlpcar(k)
-      end do
-
+        end do
+      else
+        write(6,*) ' height u_geo   v_geo    subs     ' &
+        ,'   dqtdx      dqtdy        dqtdtls     thl_rad '
+        do k=kmax,1,-1
+          write (6,'(3f7.1,5e12.4)') &
+                zf     (k), &
+                dpdxl  (k), &
+                dpdyl  (k), &
+                wfls   (k), &
+                dqtdxls(k), &
+                dqtdyls(k), &
+                dqtdtls(k), &
+                thlpcar(k)
+        end do
+      end if 
 
     end if ! end myid==0
 

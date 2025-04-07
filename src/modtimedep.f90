@@ -281,7 +281,7 @@ contains
                       dqtdtlst(k,t), &
                       thlpcart(k,t)
               end do
-            else ! else read in same columns as pressure gradients dpdx and dpdy (chosen for this approach as these columns anyway MUST exist in ls_flux.inp.xxx)
+            else ! else read in same columns as dpdx and dpdy
                 do k=1,kmax
                   read (ifinput,*) &
                         height  (k)  , &
