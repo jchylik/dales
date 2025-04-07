@@ -1711,7 +1711,7 @@ subroutine initsamptend
     if (ltenddec .and. lsamptendqt) deallocate(qtav, qtwav, qtsav, uqtwav, vqtsav, wqtav)
     if (ltenddec .and. lsamptendqr) deallocate(qrav, qrwav, qrsav, uqrwav, vqrsav, wqrav)
     if (ltenddec .and. lsamptendnr) deallocate(nrav, nrwav, nrsav, unrwav, vnrsav, wnrav)
-	if (ltenddec .and. lqlflux) deallocate(qlav, qlwav, qlsav, uqlwav, vqlsav, wqlav)
+    if (ltenddec .and. lqlflux) deallocate(qlav, qlwav, qlsav, uqlwav, vqlsav, wqlav)
 
     deallocate (tendmask)
     deallocate (nrsamptot,nrsamp,nrsamplast,nrsampnew)

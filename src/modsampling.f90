@@ -104,7 +104,7 @@ contains
     call D_MPI_BCAST(lprocblock,1,0,comm3d,mpierr)
     call D_MPI_BCAST(ltenddec,1,0,comm3d,mpierr)
     call D_MPI_BCAST(ltendleib,1,0,comm3d,mpierr)
-	call D_MPI_BCAST(lqlflux,1,0,comm3d,mpierr)
+        call D_MPI_BCAST(lqlflux,1,0,comm3d,mpierr)
 
     isamptot = 0
     if (lsampall) then
