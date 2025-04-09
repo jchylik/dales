@@ -79,6 +79,7 @@ set( dales_srcs
 	modslabaverage.f90
 	modstartup.f90
 	modstat_nc.f90
+	modstat_profiles.f90
 	modstattend.f90
 	modsubgrid.f90
 	modsubgriddata.f90
