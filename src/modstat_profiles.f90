@@ -38,7 +38,7 @@ module modstat_profiles
   ! NetCDF data
   character(len=80), allocatable :: ncname(:,:)
   character(len=80)              :: tncname(1,4)
-  real(field_r),     allocatable :: profiles(:,:)
+  real,              allocatable :: profiles(:,:)
 
   integer          :: nvar = 0
   integer(longint) :: idtav, itimeav, tnext, tnextwrite
