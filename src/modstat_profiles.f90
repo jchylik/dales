@@ -2,7 +2,7 @@ module modstat_profiles
 
   use modglobal,      only: kmax, fname_options, ifnamopt, checknamelisterror, &
                             i1, j1, k1, kmax, ijtot, btime, ih, dt_lim, timee, &
-                            tres, rtimee, imax
+                            tres, rtimee, imax, cexpnr
   use modmpi,         only: d_mpi_bcast, comm3d, mpierr, mpi_iallreduce, &
                             mpi_request, mpi_double, mpi_in_place, mpi_sum
   use modstat_nc
@@ -31,8 +31,8 @@ module modstat_profiles
   real    :: dtav, timeav
 
   ! NetCDF file variables
-  character(len=*) :: fname = 'new-profiles.xxx.nc'
-  integer          :: ncid, nrec
+  character(len=80) :: fname
+  integer           :: ncid, nrec
 
   ! NetCDF data
   character(len=80), allocatable :: ncname(:,:)
@@ -95,6 +95,8 @@ contains
     call d_mpi_bcast(dtav, 1, 0, comm3d, mpierr)
     call d_mpi_bcast(timeav, 1, 0, comm3d, mpierr)
     call d_mpi_bcast(nvar, 1, 0, comm3d, mpierr)
+
+    fname = 'new-profiles.'//cexpnr//'.nc'
 
     idtav = int(dtav / tres, kind=longint)
     itimeav = int(timeav / tres, kind=longint)
