@@ -4,7 +4,8 @@ module modstat_profiles
                             i1, j1, k1, kmax, ijtot, btime, ih, dt_lim, timee, &
                             tres, rtimee, imax, cexpnr
   use modmpi,         only: d_mpi_bcast, comm3d, mpierr, mpi_iallreduce, &
-                            mpi_request, mpi_double, mpi_in_place, mpi_sum
+                            mpi_request, mpi_double, mpi_in_place, mpi_sum, &
+                            print_info_stderr
   use modstat_nc
   use modprecision,   only: field_r, longint
   use modslabaverage, only: slabavg
@@ -56,9 +57,15 @@ contains
     character(len=*), intent(in) :: unit
     character(len=*), intent(in) :: dim
 
+    character(len=*), parameter :: routine = modname//':add_profile'
+
     character(len=80), allocatable :: tmp_ncname(:,:)
 
-    ! TODO: check for duplicate entries
+    ! Check if given name already exists. For the long name, we don't care.
+    if (findloc(ncname(:,1), value=trim(name), dim=1) > 0) then
+      call print_info_stderr(routine, 'profile '//trim(name)//' already exists')
+      error stop
+    end if
 
     ! Allocate array for metadata
     if (.not. allocated(ncname)) then
@@ -166,12 +173,14 @@ contains
     if (.not. do_stats) return
 
     ! TODO: a hash is probably more efficient here
-    do idx = 1, nvar
-      if (trim(name) == trim(ncname(idx,1))) then
-        found = .true.
-        exit
-      end if
-    end do
+    ! Find location in the list of profiles
+    idx = findloc(ncname(:,1), value=trim(name), dim=1)
+
+    ! findloc() returns 0 if the given value is not found
+    if (idx == 0) then
+      call print_info_stderr(routine, 'profile '//trim(name)//' not found')
+      error stop
+    end if
 
     ! A bit hacky maybe: figure out if the given field has ghost cells
     nh = (size(field, dim=1) - imax) / 2
@@ -196,13 +205,16 @@ contains
     integer :: nh
     logical :: found = .false.
 
-    do idx = 1, nvar
-      if (trim(name) == trim(ncname(idx,1))) then
-        found = .true.
-        exit
-      end if
-    end do
+    ! Find location in the list of profiles
+    idx = findloc(ncname(:,1), value=trim(name), dim=1)
 
+    ! findloc() returns 0 if the given value is not found
+    if (idx == 0) then
+      call print_info_stderr(routine, 'profile '//trim(name)//' not found')
+      error stop
+    end if
+
+    ! A bit hacky maybe: figure out if the given field has ghost cells
     nh = (size(field, dim=1) - imax) / 2
 
     call slabavg(field, mask, nh, slab_average)
