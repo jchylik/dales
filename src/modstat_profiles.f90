@@ -3,9 +3,7 @@ module modstat_profiles
   use modglobal,      only: kmax, fname_options, ifnamopt, checknamelisterror, &
                             i1, j1, k1, kmax, ijtot, btime, ih, dt_lim, timee, &
                             tres, rtimee, imax, cexpnr
-  use modmpi,         only: d_mpi_bcast, comm3d, mpierr, mpi_iallreduce, &
-                            mpi_request, mpi_double, mpi_in_place, mpi_sum, &
-                            print_info_stderr
+  use modmpi,         only: d_mpi_bcast, comm3d, mpierr, print_info_stderr
   use modstat_nc
   use modprecision,   only: field_r, longint
   use modslabaverage, only: slabavg
@@ -168,7 +166,6 @@ contains
 
     integer :: k, idx
     integer :: nh
-    logical :: found = .false.
 
     if (.not. do_stats) return
 
@@ -203,7 +200,6 @@ contains
 
     integer :: k, idx
     integer :: nh
-    logical :: found = .false.
 
     ! Find location in the list of profiles
     idx = findloc(ncname(:,1), value=trim(name), dim=1)
@@ -228,7 +224,6 @@ contains
   subroutine write_profiles
 
     integer :: k, n
-    type(mpi_request) :: requests(nvar)
 
     if (.not. write_stats) return
 
