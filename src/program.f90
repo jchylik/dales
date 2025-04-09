@@ -162,6 +162,7 @@ program DALES
   use moddatetime,     only : datetime
   use modemission,     only : emission
   use modopenboundary, only : openboundary_ghost,openboundary_tend,openboundary_phasevelocity,openboundary_turb
+  use modstat_profiles, only: init_profiles, sample_profiles, write_profiles
 
 !----------------------------------------------------------------
 !     0.2     USE STATEMENTS FOR TIMER MODULE
@@ -226,6 +227,8 @@ program DALES
   !call initspectra2
   call initcape
 
+  call init_profiles
+
 #if defined(_OPENACC)
   call update_gpu
 #endif
@@ -239,6 +242,10 @@ program DALES
   istep = 1
   do while (timeleft>0 .or. rk3step < 3)
     call timer_tic('program/timestep', istep)
+
+    ! Check if we have to sample profiles this time step
+    call sample_profiles
+
     ! Calculate new timestep, and reset tendencies to 0.
     call tstep_update
     call timedep
@@ -337,6 +344,7 @@ program DALES
     call checksim
     call timestat  !Timestat must preceed all other timeseries that could write in the same netCDF file (unless stated otherwise
     call genstat  !Genstat must preceed all other statistics that could write in the same netCDF file (unless stated otherwise
+    call write_profiles
     call radstat
     call lsmstat
     !call depstat
