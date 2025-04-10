@@ -17,13 +17,13 @@ module modstat_profiles
   public :: add_profile
   public :: init_profiles
   public :: sample_profiles
-  public :: sample_profile
+  public :: sample_field
   public :: write_profiles
 
-  interface sample_profile
-    module procedure sample_profile
-    module procedure sample_profile_masked
-  end interface sample_profile
+  interface sample_field
+    module procedure sample_field
+    module procedure sample_field_masked
+  end interface sample_field
 
   ! Namelist options
   logical :: lstat
@@ -157,7 +157,7 @@ contains
 
   end subroutine sample_profiles
 
-  subroutine sample_profile(name, field)
+  subroutine sample_field(name, field)
 
     character(len=*), intent(in) :: name
     real(field_r),    intent(in) :: field(:,:,:)
@@ -188,9 +188,9 @@ contains
       profiles(k,idx) = profiles(k,idx) + slab_average(k)
     end do
 
-  end subroutine sample_profile
+  end subroutine sample_field
 
-  subroutine sample_profile_masked(name, field, mask)
+  subroutine sample_field_masked(name, field, mask)
 
     character(len=*), intent(in) :: name
     real(field_r),    intent(in) :: field(:,:,:)
@@ -219,7 +219,7 @@ contains
       profiles(k,idx) = profiles(k,idx) + slab_average(k)
     end do
 
-  end subroutine sample_profile_masked
+  end subroutine sample_field_masked
 
   subroutine write_profiles
 
