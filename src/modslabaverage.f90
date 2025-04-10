@@ -197,7 +197,9 @@ contains
   !! \param kstart Lowest vertical level to average.
   !! \param kend Highest vertical level to average.
   !! \param local Only compute average on local MPI domain.
-  subroutine slabavg_r4_masked(field, mask, nh, avg, kstart, kend, local)
+  !! \param fillvalue Value to use for fully masked layers. Default is 0.
+  subroutine slabavg_r4_masked(field, mask, nh, avg, kstart, kend, local, &
+                               fillvalue)
 
     real(4), intent(in)  :: field(:,:,:)
     logical, intent(in)  :: mask(:,:,:)
@@ -206,12 +208,13 @@ contains
 
     integer, optional, intent(in) :: kstart, kend
     logical, optional, intent(in) :: local
+    real(4), optional, intent(in) :: fillvalue
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
     integer :: test, n_cells
     logical :: do_global
-    real(4) :: fld_sum
+    real(4) :: fld_sum, fillvalue_
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -235,6 +238,9 @@ contains
     else
       do_global = .false.
     end if
+
+    fillvalue_ = 0
+    if (present(fillvalue)) fillvalue_ = fillvalue
 
     ! Use a block to place n_cells_tot on the stack
     block
@@ -269,7 +275,7 @@ contains
 
       !$acc parallel loop gang default(present)
       do k = ks, ke
-        avg(k) = avg(k) / n_cells_tot(k)
+        avg(k) = merge(avg(k) / n_cells_tot(k), fillvalue_, n_cells_tot(k) > 0)
       end do
 
       !$acc end data
@@ -288,7 +294,10 @@ contains
   !! \param kstart Lowest vertical level to average.
   !! \param kend Highest vertical level to average.
   !! \param local Only compute average on local MPI domain.
-  subroutine slabavg_r8_masked(field, mask, nh, avg, kstart, kend, local)
+  !! \param fillvalue Value to use for fully masked layers. Default is 0.
+  subroutine slabavg_r8_masked(field, mask, nh, avg, kstart, kend, local, &
+                               fillvalue)
+
     real(8), intent(in)  :: field(:,:,:)
     logical, intent(in)  :: mask(:,:,:)
     integer, intent(in)  :: nh
@@ -296,12 +305,13 @@ contains
 
     integer, optional, intent(in) :: kstart, kend
     logical, optional, intent(in) :: local
+    real(8), optional, intent(in) :: fillvalue
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
     integer :: test, n_cells
     logical :: do_global
-    real(8) :: fld_sum
+    real(8) :: fld_sum, fillvalue_
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -325,6 +335,9 @@ contains
     else
       do_global = .false.
     end if
+
+    fillvalue_ = 0
+    if (present(fillvalue)) fillvalue_ = fillvalue
 
     ! Use a block to place n_cells_tot on the stack
     block
@@ -359,7 +372,7 @@ contains
 
       !$acc parallel loop gang default(present)
       do k = ks, ke
-        avg(k) = avg(k) / n_cells_tot(k)
+        avg(k) = merge(avg(k) / n_cells_tot(k), fillvalue_, n_cells_tot(k) > 0)
       end do
 
       !$acc end data
