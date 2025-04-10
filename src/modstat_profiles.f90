@@ -3,7 +3,8 @@ module modstat_profiles
   use modglobal,      only: kmax, fname_options, ifnamopt, checknamelisterror, &
                             i1, j1, k1, kmax, ijtot, btime, ih, dt_lim, timee, &
                             tres, rtimee, imax, cexpnr
-  use modmpi,         only: d_mpi_bcast, comm3d, mpierr, print_info_stderr
+  use modmpi,         only: d_mpi_bcast, comm3d, mpierr, print_info_stderr, &
+                            cmyidx, cmyidy
   use modstat_nc
   use modprecision,   only: field_r, longint
   use modslabaverage, only: slabavg
@@ -27,6 +28,7 @@ module modstat_profiles
 
   ! Namelist options
   logical :: lstat
+  logical :: lprocblock
   real    :: dtav, timeav
 
   ! NetCDF file variables
@@ -43,6 +45,7 @@ module modstat_profiles
   integer          :: nsamples
   logical          :: do_stats
   logical          :: write_stats
+  logical          :: my_task_writes
 
   real(field_r), allocatable :: slab_average(:)
 
@@ -86,7 +89,7 @@ contains
 
     integer :: ierr
 
-    namelist /NAMOUT1D/ lstat, dtav, timeav
+    namelist /NAMOUT1D/ lstat, lprocblock, dtav, timeav
 
     ! Read namelist
     if (myid == 0) then
@@ -97,11 +100,10 @@ contains
     end if
 
     call d_mpi_bcast(lstat, 1, 0, comm3d, mpierr)
+    call d_mpi_bcast(lprocblock, 1, 0, comm3d, mpierr)
     call d_mpi_bcast(dtav, 1, 0, comm3d, mpierr)
     call d_mpi_bcast(timeav, 1, 0, comm3d, mpierr)
     call d_mpi_bcast(nvar, 1, 0, comm3d, mpierr)
-
-    fname = 'new-profiles.'//cexpnr//'.nc'
 
     idtav = int(dtav / tres, kind=longint)
     itimeav = int(timeav / tres, kind=longint)
@@ -117,8 +119,20 @@ contains
 
     profiles = 0
 
+    if (lprocblock) then
+      my_task_writes = .true. ! All MPI ranks write to a file
+      fname = 'new-profiles.x'//cmyidx//'.y'//cmyidy//'.'//cexpnr//'.nc'
+    else
+      fname = 'new-profiles.'//cexpnr//'.nc'
+      if (myid == 0) then ! Only the root MPI rank writes to a file
+        my_task_writes = .true.
+      else
+        my_task_writes = .false.
+      end if
+    end if
+
     ! Initialize the NetCDF file
-    if (myid == 0) then
+    if (my_task_writes) then
       call nctiminfo(tncname(1,:))
       call open_nc(fname, ncid, nrec, n3=kmax)
 
@@ -182,7 +196,7 @@ contains
     ! A bit hacky maybe: figure out if the given field has ghost cells
     nh = (size(field, dim=1) - imax) / 2
 
-    call slabavg(field, nh, slab_average)
+    call slabavg(field, nh, slab_average, local=lprocblock)
 
     do k = 1, kmax
       profiles(k,idx) = profiles(k,idx) + slab_average(k)
@@ -213,7 +227,7 @@ contains
     ! A bit hacky maybe: figure out if the given field has ghost cells
     nh = (size(field, dim=1) - imax) / 2
 
-    call slabavg(field, mask, nh, slab_average)
+    call slabavg(field, mask, nh, slab_average, local=lprocblock)
 
     do k = 1, kmax
       profiles(k,idx) = profiles(k,idx) + slab_average(k)
@@ -233,7 +247,7 @@ contains
       end do
     end do
 
-    if (myid == 0) then
+    if (my_task_writes) then
       call writestat_nc(ncid, 1, tncname, [rtimee], nrec, .true.)
       call writestat_nc(ncid, nvar, ncname, profiles(1:kmax,:), nrec, kmax)
     end if
