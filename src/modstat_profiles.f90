@@ -2,7 +2,7 @@ module modstat_profiles
 
   use modglobal,      only: kmax, fname_options, ifnamopt, checknamelisterror, &
                             i1, j1, k1, kmax, ijtot, btime, ih, dt_lim, timee, &
-                            tres, rtimee, imax, cexpnr
+                            tres, rtimee, imax, cexpnr, dtav_glob, timeav_glob
   use modmpi,         only: d_mpi_bcast, comm3d, mpierr, print_info_stderr, &
                             cmyidx, cmyidy
   use modstat_nc
@@ -90,6 +90,9 @@ contains
     integer :: ierr
 
     namelist /NAMOUT1D/ lstat, lprocblock, dtav, timeav
+
+    dtav = dtav_glob
+    timeav = timeav_glob
 
     ! Read namelist
     if (myid == 0) then
