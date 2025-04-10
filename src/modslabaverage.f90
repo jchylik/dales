@@ -236,7 +236,7 @@ contains
     if (present(local)) then
       do_global = .not. local
     else
-      do_global = .false.
+      do_global = .true.
     end if
 
     fillvalue_ = 0
@@ -333,7 +333,7 @@ contains
     if (present(local)) then
       do_global = .not. local
     else
-      do_global = .false.
+      do_global = .true.
     end if
 
     fillvalue_ = 0
