@@ -9,7 +9,7 @@
 !
 module modtimer
   use, intrinsic :: iso_fortran_env, only: dp => real64
-  use mpi
+  use modmpi
   use modglobal, only : checknamelisterror, ifnamopt, fname_options
 #if defined(USE_NVTX)
   use modnvtx
