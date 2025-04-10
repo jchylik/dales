@@ -90,7 +90,8 @@ set( dales_srcs
 	modtimedepsv.f90
 	modtimer.f90
 	modtimestat.f90
-	modtracers.f90
+        modtracer_type.f90
+        modtracers.f90
 	moduser.f90
 	modvarbudget.f90
 	program.f90

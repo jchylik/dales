@@ -32,7 +32,7 @@
 ! 'location', i.e. switch scalar field represents which species?
 
 module modemisdata
-  
+
   implicit none
   save
 
@@ -40,17 +40,20 @@ module modemisdata
   ! ---------------------------------------------------------------------!
   ! Namelist variables                                                   !
   ! ---------------------------------------------------------------------!
-   
-  logical  :: l_emission = .false. ! scalar emission switch
+
+  logical  :: l_emission = .false.,& ! scalar emission switch
+              l_points   = .false.   ! point sources switch
   integer  :: kemis    = -1, &     ! no. of layers to include for emission
               svskip   =  0, &     ! no. scalars to exclude for emission
-              nemis    = 0         ! no. of emitted scalars  
+              nemis    =  0, &     ! no. of emitted scalars
+              npoints  =  0        ! no. of point sources in each MPI process file
+
   logical  :: l_scale = .false.    ! emission scaling switch
   real, dimension(100) :: scalefactor = 1
 
-  character(len = 6), dimension(100) :: & 
+  character(len = 6), dimension(100) :: &
               emisnames = (/ ('      ', iname=1, 100) /) ! list with scalar names,
-                          ! each name must(!) be 6 characters long for now  
+                          ! each name must(!) be 6 characters long for now
 
   ! Interaction with AGs ------------------------------------------------
   integer :: svco2ags = -1       ! Scalar field number for AGs soil respiration
@@ -63,5 +66,6 @@ module modemisdata
   ! ---------------------------------------------------------------------!
 
   real, allocatable :: emisfield(:,:,:,:,:) !array for emission fields
+  real, allocatable :: point_source_data(:,:,:) !array for point sources
 
 end module modemisdata
