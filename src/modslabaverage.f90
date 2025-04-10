@@ -19,7 +19,7 @@
 !> Routines for computing (masked) slab averaged profiles.
 module modslabaverage
 
-  use modglobal, only: ijtot
+  use modglobal, only: imax, jmax, ijtot
   use modmpi,    only: mpi_allreduce, mpi_in_place, mpi_real4, mpi_real8, mpi_integer, &
                        mpi_sum, comm3d, mpierr
 
@@ -48,17 +48,20 @@ contains
   !! \param avg Slab averaged profile.
   !! \param kstart Lowest vertical level to average
   !! \param kend Highest vertical level to average.
-  subroutine slabavg_r4(field, nh, avg, kstart, kend)
+  !! \param local Only compute average on local MPI domain.
+  subroutine slabavg_r4(field, nh, avg, kstart, kend, local)
 
     real(4), intent(in)  :: field(:,:,:)
     integer, intent(in)  :: nh
     real(4), intent(out) :: avg(:)
 
     integer, optional, intent(in) :: kstart, kend
+    logical, optional, intent(in) :: local
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
-    real(4) :: fld_sum
+    logical :: do_global
+    real(4) :: fld_sum, norm_fac
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -77,6 +80,18 @@ contains
       ke = ubound(field, dim=3)
     end if
 
+    if (present(local)) then
+      do_global = .not. local
+    else
+      do_global = .false.
+    end if
+
+    if (do_global) then
+      norm_fac = 1.0_4 / ijtot
+    else
+      norm_fac = 1.0_4 / (imax * jmax)
+    end if
+
     !$acc parallel loop gang default(present)
     do k = ks, ke
       fld_sum = 0
@@ -86,14 +101,16 @@ contains
           fld_sum = fld_sum + field(i,j,k)
         end do
       end do
-      avg(k) = fld_sum / ijtot
+      avg(k) = fld_sum * norm_fac
     end do
 
     ! TODO: experiment with non-blocking allreduce
-    !$acc host_data use_device(avg)
-    call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
-                       comm3d, mpierr)
-    !$acc end host_data
+    if (do_global) then
+      !$acc host_data use_device(avg)
+      call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
+                         comm3d, mpierr)
+      !$acc end host_data
+    end if
 
   end subroutine slabavg_r4
 
@@ -105,17 +122,20 @@ contains
   !! \param avg Slab averaged profile.
   !! \param kstart Lowest vertical level to average.
   !! \param kend Highest vertical level to average.
-  subroutine slabavg_r8(field, nh, avg, kstart, kend)
+  !! \param local Only compute average on local MPI domain.
+  subroutine slabavg_r8(field, nh, avg, kstart, kend, local)
 
     real(8), intent(in)  :: field(:,:,:)
     integer, intent(in)  :: nh
     real(8), intent(out) :: avg(:)
 
     integer, optional, intent(in) :: kstart, kend
+    logical, optional, intent(in) :: local
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
-    real(8) :: fld_sum
+    logical :: do_global
+    real(8) :: fld_sum, norm_fac
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -134,6 +154,18 @@ contains
       ke = ubound(field, dim=3)
     end if
 
+    if (present(local)) then
+      do_global = .not. local
+    else
+      do_global = .false.
+    end if
+
+    if (do_global) then
+      norm_fac = 1.0_8 / ijtot
+    else
+      norm_fac = 1.0_8 / (imax * jmax)
+    end if
+
     !$acc parallel loop gang default(present)
     do k = ks, ke
       fld_sum = 0
@@ -143,13 +175,15 @@ contains
           fld_sum = fld_sum + field(i,j,k)
         end do
       end do
-      avg(k) = fld_sum / ijtot
+      avg(k) = fld_sum * norm_fac
     end do
 
-    !$acc host_data use_device(avg)
-    call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real8, mpi_sum, &
-                       comm3d, mpierr)
-    !$acc end host_data
+    if (do_global) then
+      !$acc host_data use_device(avg)
+      call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real8, mpi_sum, &
+                         comm3d, mpierr)
+      !$acc end host_data
+    end if
 
   end subroutine slabavg_r8
 
@@ -162,7 +196,8 @@ contains
   !! \param avg Slab averaged profile.
   !! \param kstart Lowest vertical level to average.
   !! \param kend Highest vertical level to average.
-  subroutine slabavg_r4_masked(field, mask, nh, avg, kstart, kend)
+  !! \param local Only compute average on local MPI domain.
+  subroutine slabavg_r4_masked(field, mask, nh, avg, kstart, kend, local)
 
     real(4), intent(in)  :: field(:,:,:)
     logical, intent(in)  :: mask(:,:,:)
@@ -170,10 +205,12 @@ contains
     real(4), intent(out) :: avg(:)
 
     integer, optional, intent(in) :: kstart, kend
+    logical, optional, intent(in) :: local
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
     integer :: test, n_cells
+    logical :: do_global
     real(4) :: fld_sum
 
     is = lbound(field, dim=1) + nh
@@ -191,6 +228,12 @@ contains
       ke = kend
     else
       ke = ubound(field, dim=3)
+    end if
+
+    if (present(local)) then
+      do_global = .not. local
+    else
+      do_global = .false.
     end if
 
     ! Use a block to place n_cells_tot on the stack
@@ -215,12 +258,14 @@ contains
         n_cells_tot(k) = n_cells
       end do
 
-      !$acc host_data use_device(avg, ne)
-      call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
-                         comm3d, mpierr)
-      call mpi_allreduce(mpi_in_place, n_cells_tot, ke - ks + 1, mpi_integer, mpi_sum, &
-                         comm3d, mpierr)
-      !$acc end host_data
+      if (do_global) then
+        !$acc host_data use_device(avg, ne)
+        call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
+                           comm3d, mpierr)
+        call mpi_allreduce(mpi_in_place, n_cells_tot, ke - ks + 1, mpi_integer, &
+                           mpi_sum, comm3d, mpierr)
+        !$acc end host_data
+      end if
 
       !$acc parallel loop gang default(present)
       do k = ks, ke
@@ -242,17 +287,20 @@ contains
   !! \param avg Slab averaged profile.
   !! \param kstart Lowest vertical level to average.
   !! \param kend Highest vertical level to average.
-  subroutine slabavg_r8_masked(field, mask, nh, avg, kstart, kend)
+  !! \param local Only compute average on local MPI domain.
+  subroutine slabavg_r8_masked(field, mask, nh, avg, kstart, kend, local)
     real(8), intent(in)  :: field(:,:,:)
     logical, intent(in)  :: mask(:,:,:)
     integer, intent(in)  :: nh
     real(8), intent(out) :: avg(:)
 
     integer, optional, intent(in) :: kstart, kend
+    logical, optional, intent(in) :: local
 
     integer :: i, j, k
     integer :: is, ie, js, je, ks, ke
     integer :: test, n_cells
+    logical :: do_global
     real(8) :: fld_sum
 
     is = lbound(field, dim=1) + nh
@@ -270,6 +318,12 @@ contains
       ke = kend
     else
       ke = ubound(field, dim=3)
+    end if
+
+    if (present(local)) then
+      do_global = .not. local
+    else
+      do_global = .false.
     end if
 
     ! Use a block to place n_cells_tot on the stack
@@ -294,12 +348,14 @@ contains
         n_cells_tot(k) = n_cells
       end do
 
-      !$acc host_data use_device(avg, ne)
-      call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
-              comm3d, mpierr)
-      call mpi_allreduce(mpi_in_place, n_cells_tot, ke - ks + 1, mpi_integer, mpi_sum, &
-              comm3d, mpierr)
-      !$acc end host_data
+      if (do_global) then
+        !$acc host_data use_device(avg, ne)
+        call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
+                           comm3d, mpierr)
+        call mpi_allreduce(mpi_in_place, n_cells_tot, ke - ks + 1, mpi_integer, &
+                           mpi_sum, comm3d, mpierr)
+        !$acc end host_data
+      end if
 
       !$acc parallel loop gang default(present)
       do k = ks, ke
