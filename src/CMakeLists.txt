@@ -140,8 +140,6 @@ set( rrtmg_lw_srcs
 	${PROJECT_SOURCE_DIR}/external/RRTMG/RRTMG_LW/src/rrtmg_lw_rtrnmr.f90
 	${PROJECT_SOURCE_DIR}/external/RRTMG/RRTMG_LW/src/rrtmg_lw_setcoef.f90
 	${PROJECT_SOURCE_DIR}/external/RRTMG/RRTMG_LW/src/rrtmg_lw_taumol.f90
-	${PROJECT_SOURCE_DIR}/external/RRTMG/RRTMG_LW/src/src_link
-	${PROJECT_SOURCE_DIR}/external/RRTMG/RRTMG_LW/src/util_link
 )
 
 # RRTMG - shortwave
