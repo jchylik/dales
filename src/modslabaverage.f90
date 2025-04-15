@@ -83,7 +83,7 @@ contains
     if (present(local)) then
       do_global = .not. local
     else
-      do_global = .false.
+      do_global = .true.
     end if
 
     if (do_global) then
@@ -157,7 +157,7 @@ contains
     if (present(local)) then
       do_global = .not. local
     else
-      do_global = .false.
+      do_global = .true.
     end if
 
     if (do_global) then
