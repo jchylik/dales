@@ -613,8 +613,10 @@ contains
           call init_from_netcdf('init.'//cexpnr//'.nc', height, uprof, vprof, &
                                 thlprof, qtprof, e12prof, ug, vg, dpdxl, dpdyl, wfls, &
                                 dqtdxls, dqtdyls, dqtdtls, thlpcar, kmax)
-          call tracer_profs_from_netcdf('tracers.'//cexpnr//'.nc', &
-                                        tracer_prop, svprof(1:kmax,:))
+          if (nsv_user > 0) then
+            call tracer_profs_from_netcdf('tracers.'//cexpnr//'.nc', &
+                                          tracer_prop, svprof(1:kmax,:))
+          end if
         else
           open (ifinput,file='prof.inp.'//cexpnr,status='old',iostat=ierr)
           if (ierr /= 0) then
