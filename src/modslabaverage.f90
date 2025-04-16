@@ -19,6 +19,8 @@
 !> Routines for computing (masked) slab averaged profiles.
 module modslabaverage
 
+  use, intrinsic :: iso_fortran_env, only: real32, real64
+
   use modglobal, only: imax, jmax, ijtot
   use modmpi,    only: mpi_allreduce, mpi_in_place, mpi_real4, mpi_real8, mpi_integer, &
                        mpi_sum, comm3d, mpierr
@@ -49,16 +51,16 @@ contains
   !! \param local Only compute average on local MPI domain.
   subroutine slabavg_r4(field, nh, avg, local)
 
-    real(4), intent(in)  :: field(:,:,:)
-    integer, intent(in)  :: nh
-    real(4), intent(out) :: avg(:)
+    real(real32), intent(in)  :: field(:,:,:)
+    integer,      intent(in)  :: nh
+    real(real32), intent(out) :: avg(:)
 
     logical, optional, intent(in) :: local
 
-    integer :: i, j, k
-    integer :: is, ie, js, je, ks, ke
-    logical :: do_global
-    real(4) :: fld_sum, norm_fac
+    integer      :: i, j, k
+    integer      :: is, ie, js, je, ks, ke
+    logical      :: do_global
+    real(real32) :: fld_sum, norm_fac
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -74,9 +76,9 @@ contains
     end if
 
     if (do_global) then
-      norm_fac = 1.0_4 / ijtot
+      norm_fac = 1.0_real32 / ijtot
     else
-      norm_fac = 1.0_4 / (imax * jmax)
+      norm_fac = 1.0_real32 / (imax * jmax)
     end if
 
     !$acc parallel loop gang default(present)
@@ -110,16 +112,16 @@ contains
   !! \param local Only compute average on local MPI domain.
   subroutine slabavg_r8(field, nh, avg, local)
 
-    real(8), intent(in)  :: field(:,:,:)
-    integer, intent(in)  :: nh
-    real(8), intent(out) :: avg(:)
+    real(real64), intent(in)  :: field(:,:,:)
+    integer,      intent(in)  :: nh
+    real(real64), intent(out) :: avg(:)
 
     logical, optional, intent(in) :: local
 
-    integer :: i, j, k
-    integer :: is, ie, js, je, ks, ke
-    logical :: do_global
-    real(8) :: fld_sum, norm_fac
+    integer      :: i, j, k
+    integer      :: is, ie, js, je, ks, ke
+    logical      :: do_global
+    real(real64) :: fld_sum, norm_fac
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -135,9 +137,9 @@ contains
     end if
 
     if (do_global) then
-      norm_fac = 1.0_8 / ijtot
+      norm_fac = 1.0_real64 / ijtot
     else
-      norm_fac = 1.0_8 / (imax * jmax)
+      norm_fac = 1.0_real64 / (imax * jmax)
     end if
 
     !$acc parallel loop gang default(present)
@@ -172,19 +174,19 @@ contains
   !! \param fillvalue Value to use for fully masked layers. Default is 0.
   subroutine slabavg_r4_masked(field, mask, nh, avg, local, fillvalue)
 
-    real(4), intent(in)  :: field(:,:,:)
-    logical, intent(in)  :: mask(:,:,:)
-    integer, intent(in)  :: nh
-    real(4), intent(out) :: avg(:)
+    real(real32), intent(in)  :: field(:,:,:)
+    logical,      intent(in)  :: mask(:,:,:)
+    integer,      intent(in)  :: nh
+    real(real32), intent(out) :: avg(:)
 
-    logical, optional, intent(in) :: local
-    real(4), optional, intent(in) :: fillvalue
+    logical,      optional, intent(in) :: local
+    real(real32), optional, intent(in) :: fillvalue
 
-    integer :: i, j, k
-    integer :: is, ie, js, je, ks, ke
-    integer :: test, n_cells
-    logical :: do_global
-    real(4) :: fld_sum, fillvalue_
+    integer      :: i, j, k
+    integer      :: is, ie, js, je, ks, ke
+    integer      :: test, n_cells
+    logical      :: do_global
+    real(real32) :: fld_sum, fillvalue_
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
@@ -255,19 +257,19 @@ contains
   !! \param fillvalue Value to use for fully masked layers. Default is 0.
   subroutine slabavg_r8_masked(field, mask, nh, avg, local, fillvalue)
 
-    real(8), intent(in)  :: field(:,:,:)
-    logical, intent(in)  :: mask(:,:,:)
-    integer, intent(in)  :: nh
-    real(8), intent(out) :: avg(:)
+    real(real64), intent(in)  :: field(:,:,:)
+    logical,      intent(in)  :: mask(:,:,:)
+    integer,      intent(in)  :: nh
+    real(real64), intent(out) :: avg(:)
 
-    logical, optional, intent(in) :: local
-    real(8), optional, intent(in) :: fillvalue
+    logical,      optional, intent(in) :: local
+    real(real64), optional, intent(in) :: fillvalue
 
-    integer :: i, j, k
-    integer :: is, ie, js, je, ks, ke
-    integer :: test, n_cells
-    logical :: do_global
-    real(8) :: fld_sum, fillvalue_
+    integer      :: i, j, k
+    integer      :: is, ie, js, je, ks, ke
+    integer      :: test, n_cells
+    logical      :: do_global
+    real(real64) :: fld_sum, fillvalue_
 
     is = lbound(field, dim=1) + nh
     ie = ubound(field, dim=1) - nh
