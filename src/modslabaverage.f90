@@ -363,7 +363,7 @@ contains
 
       if (do_global) then
         !$acc host_data use_device(avg, ne)
-        call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real4, mpi_sum, &
+        call mpi_allreduce(mpi_in_place, avg, ke - ks + 1, mpi_real8, mpi_sum, &
                            comm3d, mpierr)
         call mpi_allreduce(mpi_in_place, n_cells_tot, ke - ks + 1, mpi_integer, &
                            mpi_sum, comm3d, mpierr)
