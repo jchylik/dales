@@ -63,7 +63,7 @@ contains
     use modmpi,         only : myid, comm3d, mpierr, myidx, myidy, d_mpi_bcast, excjs, D_MPI_ALLREDUCE, &
                                mpi_max, mpi_sum
     use modsurface,     only : lmostlocal
-    use modsubgriddata, only : lanisotrop
+    use modsubgriddata, only : lanisotrop, lsmagorinsky
 
     implicit none
 
@@ -107,7 +107,7 @@ contains
           write (6,*) 'tendencies at the top of obstacles'
         end if
 
-        !< SvdL, 20250210: check for use of 2nd order advection. Ideally, IBM should work with kappa advection for tracers, IMPLEMENT later.
+        !< check for use of 2nd order advection. Ideally, IBM should work with kappa advection for tracers, IMPLEMENT later.
         advarr = (/iadv_mom,iadv_tke,iadv_thl,iadv_qt,iadv_sv/)
         if (any(advarr/=iadv_cd2)) then
           write (6,*) 'Current IBM implementation only works with 2nd order advection'
@@ -119,6 +119,11 @@ contains
         if ( lanisotrop ) then
           write (6,*) 'WARNING: you are using IBM with anisotropic grids in x,y-direction'
           write (6,*) 'while possible, this may cause unexpected results (blending effects)'
+        end if
+
+        if ( .not.(lsmagorinsky) ) then
+          write (6,*) 'WARNING: subgrid TKE (e120) is not (yet) explicitly corrected for walls'
+          write (6,*) 'This includes production, destruction and dissipation terms in sgs-tke budget'
         end if
 
         !! Check doesn't work currently, related to order in startup routine
@@ -143,14 +148,14 @@ contains
     !< Step out of further subroutine when IBM is switched off
     if (.not. (lapply_ibm)) return
 
-    ! SvdL, 20250210: TODO May change later to allow for wall dependent roughness (not sure how to practically do this.. --> types)
+    ! TODO change to allow for wall dependent roughness
     ! Calculate law-of-wall coefficients for vertical walls (constant; no stability correction on vertical walls)
     dx_half = 0.5 * dx
     dy_half = 0.5 * dy
     Cm_xwall = (fkar/(log(dx_half/z0m_wall)))**2
     Cm_ywall = (fkar/(log(dy_half/z0m_wall)))**2
 
-    ! SvdL, 20250210: TODO Extend later as well with more options: constant flux, reactive wall temperature
+    ! TODO extend later as well with more options: constant flux, reactive wall temperature
     ! Set thermal boundary conditions for vertical walls to either Dirichlet (lwallheat=.true.) or zero flux
     if (lwallheat) then
       Cd_xwall = fkar**2 / log(dx_half/z0m_wall) / log(dx_half/z0h_wall)
@@ -361,9 +366,10 @@ contains
     real(field_r)     :: u_at_v_min, u_at_v_plus, v_at_u_min, v_at_u_plus
     real(field_r)     :: w_at_v_min, w_at_v_plus, w_at_u_min, w_at_u_plus
     real(field_r)     :: u_at_w_min, u_at_w_plus, v_at_w_min, v_at_w_plus
-    real(field_r)     :: uspeed, Lob, z_MO
+    real(field_r)     :: uspeed, z_MO
     real(field_r)     :: tau_vu_plus, tau_vu_min, tau_wu_min, tau_wu_plus, tau_uv_min, tau_uv_plus, tau_wv_min, tau_wv_plus
-
+    real              :: Lob
+    
     if (.not. lapply_ibm) return
 
     call timer_tic('modibm/applyibm',0)
@@ -411,7 +417,7 @@ contains
     !> All corrections consist of 2 parts: cancel the "wrong" diffusion imposed by modsubgrid at fluid points at the wall, and add wall friction/flux.
     !> In this framework, we assume no correction for advection is needed, as velocities at walls should already be close to zero (may better enforce later)
 
-    !> Correct tendencies for walls in positive z-direction
+    !> Correct tendencies for walls in positive z-direction (only works when k>1, which should be the case for vertical walls [see initibm])
     !$acc parallel loop gang vector default(present)
     do nn = 1,Nzwalls_plus
       i = izw_p(nn,1)
@@ -421,10 +427,6 @@ contains
       !> First set the normal velocity at the wall (correct for any drift)
       wp(i,j,k)   = -w0(i,j,k)*rk3coefi
 
-      !!!! SvdL 11 April 2025: controleer: dit werkt waarschijnlijk alleen als k>1 (dus fout bij k=1, check?)
-      !!!! Ook: is er een correctie nodig voor de diffusieve flux van w?
-      !!!! IBM k-value for vertical walls should per definition be larger than 1, see above
-      !!!! ADD SUBGRID TKE CORRECTION FOR PLUS WALLS.. SHEARDISS BUOY AND STRAIN CREATION
       !> Remove "wrong" diffusive tendencies
       ! for u(i,j,k):
       emom = ( dzf(k-1) * ( ekm(i,j,k  ) + ekm(i+1,j,k  ) )  + &
@@ -461,7 +463,7 @@ contains
       else if (lneutral) then
         Cm_zwall = fkar**2 / (log(z_MO / z0m_wall))** 2
         Cd_zwall = fkar**2 / (log(z_MO / z0m_wall)) / (log(z_MO / z0h_wall))
-      else ! MAG IK EEN FUNCTIE EEN IN FUNCTIE AANROEPEN!!!!!!
+      else
         Lob      = getobl_local(uspeed, thl0(i,j,k), qt0(i,j,k), thlroof, qtroof, z_MO, z0m_wall, z0h_wall)
         Cm_zwall = fkar**2 / (log(z_MO / z0m_wall) - psim(z_MO / Lob) + psim(z0m_wall / Lob))** 2
         Cd_zwall = fkar**2 / (log(z_MO / z0m_wall) - psim(z_MO / Lob) + psim(z0m_wall / Lob)) / (log(z_MO / z0h_wall) - psih(z_MO / Lob) + psih(z0h_wall / Lob))
@@ -472,13 +474,11 @@ contains
       vp(i,j  ,k) = vp(i,j  ,k) - 0.25_field_r * rhobh(k)/rhobf(k) * Cm_zwall * ( v0(i,j,k) + v0(i,j+1,k) ) * uspeed * dzfi(k)
       vp(i,j+1,k) = vp(i,j+1,k) - 0.25_field_r * rhobh(k)/rhobf(k) * Cm_zwall * ( v0(i,j,k) + v0(i,j+1,k) ) * uspeed * dzfi(k)
 
-      !! plaats op goede plek hogerop..
-      !!! SVDL 14 APRIL: I forgot to cancel out "wrong" vertical DIFFUSIVE TERM of the temperature .. 
-      !! VERY TENTATIVE FIX.. CHECK LATER!!, 0.5 comes from interpolation ekm (CHECK THIS LATER)
+      ! SvdL: tentative fix for vertical diffusion of temperature over z-walls. Do theck later. Also here, 0.5 comes from interpolation of ekm.
       thlp(i,j,k) = thlp(i,j,k) + 0.5_field_r * rhobh(k)/rhobf(k) * ( ( ( dzf(k-1) * ekm(i,j,k) ) + ( dzf(k ) * ekm(i,j,k-1)) )* dzhi(k)  ) * ( thl0(i,j,k) - thl0(i-1,j,k) ) * dzhi(k) * dzfi(k)
       
       !> not sure yet how to properly include zero flux conditions (... copy relevant isurf parts from modsurface.f90 here)
-      !  if flux = constant, it is just the flux to feed into here. Yet, roof temperatures should still be diagnosed somehow (requiring energy balance)
+      ! if flux = constant, it is just the flux to feed into here. Yet, roof temperatures should still be diagnosed somehow (requiring energy balance)
       ! doubting wheter rhobh(k)/rhobf(k) are truly correct here, i.e., at right positions..
       thlp(i,j,k) = thlp(i,j,k) - rhobh(k)/rhobf(k) * Cd_zwall * ( thl0(i,j,k) - thlroof ) * uspeed * dzfi(k)
       qtp(i,j,k)  =  qtp(i,j,k) - rhobh(k)/rhobf(k) * Cd_zwall * ( qt0(i,j,k) - qtroof )   * uspeed * dzfi(k)
@@ -504,7 +504,6 @@ contains
 
     end do
 
-    !!!! SvdL 11 April 2025: ook hier.. doe geen correctie voor e12 -> er is dus wel diffusieve flux van e120 over de wall hoewel binnen gebouwen e12 en K insignifant zijn, maar buiten de muur is ekm wss veel te hoog om accuraat zo'n flux te berekenen. Dus cancel hem uit..
     !> Correct tendencies for walls in positive x-direction
     !$acc parallel loop gang vector default(present)
     do nn = 1,Nxwalls_plus
@@ -521,10 +520,8 @@ contains
       w_at_v_plus = 0.25_field_r * ( w0(i,j,k) + w0(i,j,k+1) + w0(i,j-1,k) + w0(i,j-1,k+1) )  !at v(i,j,k)
       tau_vu_plus = log_wallaw(v0(i,j,k), w_at_v_plus, Cm_xwall)
 
-      vp(i,j  ,k) = vp(i,j  ,k) + 0.5_field_r * emmo * ( (v0(i,j,k) - v0(i-1,j,k) ) / dx) / dx - 0.5_field_r * tau_vu_plus / dx
-      ! (SvdL, 20250219): factor 0.5 originates to avoid double correction
-      ! NOTE, SvdL, 20250219: if x-plane next to current one is also a wall, part will be corrected via v(i,j+1,k) in that plane. if plane is not a wall, we do want to allow for partial contribution to diffusive flux
-      ! NOTE, SvdL, 20250219: I find the calculations of the diffusive tendencies rather confusing.. that being said: here, we simply correct for what we do there.
+      vp(i,j  ,k) = vp(i,j  ,k) + 0.5_field_r * emmo * ( (v0(i,j,k) - v0(i-1,j,k) ) / dx) / dx - 0.5_field_r * tau_vu_plus / dx ! factor 0.5 originates to avoid double correction
+      ! NOTE: if x-plane next to current one is also a wall, part will be corrected via v(i,j+1,k) in that plane. if plane is not a wall, we do want to allow for partial contribution to diffusive flux
 
       ! for v(i,j+1,k):
       empo = 0.25_field_r * ( ekm(i,j,k) + ekm(i,j+1,k) + ekm(i-1,j,k) + ekm(i-1,j+1,k) )
@@ -564,7 +561,7 @@ contains
       do nc=1,nsv
         svp(i,j,k,nc) = svp(i,j,k,nc) + 0.5_field_r * ( ekh(i,j,k) + ekh(i-1,j,k) ) * ( sv0(i,j,k,nc) - sv0(i-1,j,k,nc) ) * dx2i
       end do
-      !call xwalle12(i,j,k) ! correction is ignored assuming u,v,w,subgrid TKE are near zero inside buildings <<< SvdL, 20250219: not sure why this would be any different than scalars above!!
+      !call xwalle12(i,j,k) ! correction is ignored assuming u,v,w,subgrid TKE are near zero inside buildings
 
       !> Finally, set correct heat flux from wall to fluid
       uspeed = 0.5_field_r * ( ( v0(i,j,k) + v0(i,j+1,k) )**2 + ( w0(i,j,k) + w0(i,j,k+1) )**2 )**0.5_field_r
@@ -589,7 +586,7 @@ contains
       w_at_v_min  = 0.25_field_r * ( w0(i-1,j,k) + w0(i-1,j,k+1) + w0(i-1,j-1,k) + w0(i-1,j-1,k+1) )  !at v(i-1,j,k)
       tau_vu_min = log_wallaw(v0(i-1,j,k), w_at_v_min , Cm_xwall) !if v0 > 0, tau > 0, minus sign in tendency enforces opposing friction
 
-      vp(i-1,j  ,k) = vp(i-1,j  ,k) - 0.5_field_r * emmo * ( (v0(i,j,k) - v0(i-1,j,k) ) / dx) / dx  - 0.5_field_r * tau_vu_min / dx ! (SvdL, 20250219): factor 0.5 originates to avoid double correction
+      vp(i-1,j  ,k) = vp(i-1,j  ,k) - 0.5_field_r * emmo * ( (v0(i,j,k) - v0(i-1,j,k) ) / dx) / dx  - 0.5_field_r * tau_vu_min / dx ! factor 0.5 originates to avoid double correction
 
       ! for v(i-1,j+1,k):
       empo = 0.25_field_r * ( ekm(i,j,k) + ekm(i,j+1,k) + ekm(i-1,j,k) + ekm(i-1,j+1,k) )
@@ -691,7 +688,7 @@ contains
       do nc=1,nsv
         svp(i,j,k,nc) = svp(i,j,k,nc) + 0.5_field_r * ( ekh(i,j,k) + ekh(i,j-1,k) ) * ( sv0(i,j,k,nc) - sv0(i,j-1,k,nc) ) * dy2i
       end do
-      !call xwalle12(i,j,k) ! correction is ignored assuming u,v,w,subgrid TKE are near zero inside buildings <<< SvdL, 20250219: not sure why this would be any different than scalars above!!
+      !call xwalle12(i,j,k) ! correction is ignored assuming u,v,w,subgrid TKE are near zero inside buildings
 
       !> Finally, set correct heat flux from wall to fluid
       uspeed = 0.5_field_r * ( ( u0(i,j,k) + u0(i+1,j,k) )**2 + ( w0(i,j,k) + w0(i,j,k+1) )**2 )**0.5_field_r
@@ -716,7 +713,7 @@ contains
       w_at_u_min  = 0.25_field_r * ( w0(i,j-1,k) + w0(i,j-1,k+1) + w0(i-1,j-1,k) + w0(i-1,j-1,k+1) )  !at u(i,j-1,k)
       tau_uv_min = log_wallaw(u0(i,j-1,k), w_at_u_min , Cm_ywall) !if v0 > 0, tau > 0, minus sign in tendency enforces opposing friction
 
-      up(i,j-1,k) = up(i,j-1  ,k) - 0.5_field_r * emmo * ( (u0(i,j,k) - u0(i,j-1,k) ) / dy) / dy  - 0.5_field_r * tau_uv_min / dy ! (SvdL, 20250219): factor 0.5 originates to avoid double correction
+      up(i,j-1,k) = up(i,j-1  ,k) - 0.5_field_r * emmo * ( (u0(i,j,k) - u0(i,j-1,k) ) / dy) / dy  - 0.5_field_r * tau_uv_min / dy ! factor 0.5 originates to avoid double correction
 
       ! for u(i+1,j-1,k):
       empo = 0.25_field_r * ( ekm(i,j,k) + ekm(i,j-1,k) + ekm(i+1,j,k) + ekm(i+1,j-1,k) )
@@ -811,11 +808,11 @@ contains
     !$acc routine seq
     real(field_r), intent(in) :: uspeed, thl, qt, thlroof, qtroof, z_MO, z0m_wall, z0h_wall
 
-    real(field_r)             :: Lob
+    real                :: Lob
 
     ! local internal variables
     integer             :: i, j, iter
-    real(field_r)       :: Rib, fx, fxdif, Lold, Lstart, Lend, thv, thvsl, thvroof, horv2
+    real                :: Rib, fx, fxdif, Lold, Lstart, Lend, thv, thvsl, thvroof, horv2
 
     thv   = thl * (1. + (rv/rd - 1.) * qt)
     thvsl = thlroof * (1. + (rv/rd - 1.) * qtroof)
@@ -877,7 +874,9 @@ contains
                                                     !similar as michael who states "give tau the same sign as utan"
   end function log_wallaw
 
-  ! (SvdL, 16-05-2023:) does this force e12 to zero at the wall or its flux? In normal surface model, the flux at bottom surface is assumed to be zero
+  ! SvdL: wall corection for e12 currenly neglected. To be tested in detail later.
+  ! So, we now allow for diffusive flux of e12 over the walls, while e12 and ekm/ekh should be insignificant inside buildings. Just outside ekm is probably too large to accurately determine such flux at all -> so we should consider proper cancellation.
+
   ! subroutine xwalle12(i,j,k)
 
   !   use modglobal,      only : dx2i, dx, dy, dzh
@@ -1058,7 +1057,6 @@ contains
   !   end if
   ! end subroutine ywalle12
 
-  ! This function contains a bug imho, it OVERWRITES the tendency for temperature instead of adding the wall heat flux..
   ! subroutine bulk_wall_temp(uspeed,thl,Cd,dx,thlp)
   !   implicit none
 

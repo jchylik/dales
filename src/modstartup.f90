@@ -557,6 +557,8 @@ contains
     use modtracers,        only : tracer_prop, tracer_profs_from_netcdf, nsv_user
     use go,                only : goSplitString_s
     use utils,             only : to_lower
+    use modslabaverage,    only : slabavg
+    
 #if defined(_OPENACC)
     use modgpu, only: update_gpu, update_host, host_is_updated, update_gpu_surface
 #endif

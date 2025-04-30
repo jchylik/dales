@@ -241,12 +241,12 @@ contains
 
     if(lsmagorinsky) then
       ! First level
-      mlen = csz(1) * delta(1) ! (SvdL, 20241106:) default value when lmason = .false.
+      mlen = csz(1) * delta(1) ! default value when lmason = .false.
       !$acc parallel loop collapse(2) private(strain2) async(1)
       do i = 2, i1
         do j = 2, j1
 
-            ! (SvdL, 20241106:) moved Mason correction here to allow horizontal variation in z0m
+            ! SvdL: moved Mason correction here to allow horizontal variation in z0m
             if(lmason) then
               mlen   = (1. / (csz(1) * delta(1))**nmason + 1. / (fkar * (zf(1)+z0m(i,j)))**nmason)**(-1./nmason)
             end if
@@ -274,7 +274,7 @@ contains
                     ( 0.25_field_r*(w0(i,j+1,2)-w0(i,j-1,2))*dyi + &
                       dvdz(i,j) )**2 )
 
-          RiPrratio  = min( grav/thvf(1) * dthvdz(i,j,1) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! SvdL, 20241106: dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
+          RiPrratio  = min( grav/thvf(1) * dthvdz(i,j,1) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! dthvdz(i,j,1) already contains MO gradient at k=1 (see modthermodynamics.f90)
 
           ekm(i,j,1) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1 - RiPrratio)
           ekh(i,j,1) = ekm(i,j,1) / Prandtl
@@ -292,7 +292,7 @@ contains
 
             mlen = csz(k) * delta(k) ! default value when lmason = .false.
 
-            ! (SvdL, 20241106:) moved Mason correction here to allow horizontal variation in z0m
+            ! SvdL: moved Mason correction here to allow horizontal variation in z0m
             if(lmason) then
               mlen   = (1. / (mlen)**nmason + 1. / (fkar * (zf(k)+z0m(i,j)))**nmason)**(-1./nmason)
             end if 
@@ -332,8 +332,8 @@ contains
               ((v0(i  ,j+1,k+1)-v0(i  ,j+1,k  )) *dzhi(k+1) + &
               (w0(i  ,j+1,k+1)-w0(i  ,j  ,k+1)) *dyi )**2 )
 
-            ! (SvdL, 20241106:) take ratio of gradient Richardson number to critical Richardson number (equal to Prandtl in Smagorinsky-Lilly model)
-            RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,k) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! (SvdL, 20241106:) dthvdz(i,j,k) already contains MO gradient at k=kmin (see modthermodynamics.f90)
+            ! take ratio of gradient Richardson number to critical Richardson number (equal to Prandtl in Smagorinsky-Lilly model)
+            RiPrratio  = min( grav/thvf(k) * dthvdz(i,j,k) / (2 * strain2 * Prandtl) , (1 - eps1) ) ! dthvdz(i,j,1) already contains MO gradient at k=1 (see modthermodynamics.f90)
 
             ekm(i,j,k) = mlen ** 2 * sqrt(2 * strain2) * sqrt(1 - RiPrratio)
             ekh(i,j,k) = ekm(i,j,k) / Prandtl
