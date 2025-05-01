@@ -164,7 +164,8 @@ program DALES
   use modemission,     only : emission
   use modopenboundary, only : openboundary_ghost,openboundary_tend,openboundary_phasevelocity,openboundary_turb
   use modstat_profiles, only: init_profiles, sample_profiles, write_profiles
-
+  use modibm,          only : applyibm, zerowallvelocity
+  use modibmdata,      only : lpoislast 
 !----------------------------------------------------------------
 !     0.2     USE STATEMENTS FOR TIMER MODULE
 !----------------------------------------------------------------
@@ -318,7 +319,14 @@ program DALES
     call grwdamp !damping at top of the model
 !JvdD    call tqaver !set thl, qt and sv(n) equal to slab average at level kmax
     call samptend(tend_topbound)
+
+    ! either apply ibm before or after poisson solver
+    if (lpoislast .eqv.  .true.) call applyibm
+    if (lpoislast .eqv. .false.) call zerowallvelocity ! put wall velocities to zero before Poisson
     call poisson
+
+    if (lpoislast .eqv. .false.) call applyibm ! then only apply IBM after Poisson
+
     call samptend(tend_pois,lastterm=.true.)
     if(lopenbc) call openboundary_phasevelocity()
 

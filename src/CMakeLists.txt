@@ -46,6 +46,8 @@ set( dales_srcs
 	modgpumpiinterface.f90
 	modheterostats.f90
 	modhypre.f90
+	modibm.f90
+	modibmdata.f90
 	modlsm.f90
 	modlsmcrosssection.f90
 	modlsmdata.f90
