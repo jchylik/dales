@@ -59,7 +59,8 @@ contains
                                fname_options, nsv, cu, cv, ijtot, &
                                iadv_mom,iadv_tke,iadv_thl,iadv_qt,iadv_sv,iadv_cd2, &
                                ibas_prf, &
-                               dx,dy,fkar
+                               dx,dy,fkar,&
+                               checknamelisterror
     use modmpi,         only : myid, comm3d, mpierr, myidx, myidy, d_mpi_bcast, excjs, D_MPI_ALLREDUCE, &
                                mpi_max, mpi_sum
     use modsurface,     only : lmostlocal
@@ -85,13 +86,7 @@ contains
 
       open (ifnamopt,file=fname_options,status='old',iostat=ierr)
       read (ifnamopt,NAMIBM,iostat=ierr)
-
-      if (ierr > 0) then
-        print *, 'Problem in namoptions NAMIBM'
-        print *, 'iostat error: ', ierr
-        stop 'ERROR: Problem in namoptions NAMIBM'
-      end if
-
+      call checknamelisterror(ierr, ifnamopt, 'NAMIBM')
       write (6,NAMIBM)
       close (ifnamopt)
 
