@@ -13,4 +13,4 @@
 	branch = develop
 [submodule "external/rrtmgp-data"]
 	path = external/rrtmgp-data
-	url = git@github.com:earth-system-radiation/rrtmgp-data.git
+	url = https://github.com/earth-system-radiation/rrtmgp-data.git
