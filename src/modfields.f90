@@ -130,6 +130,8 @@ save
   real(field_r), allocatable :: surf_rain(:,:)               !< integrated surface rain
 
 
+  logical, allocatable :: lsv_nudge_at_boundary (:)
+
 contains
 !> Allocate and initialize the prognostic variables
 subroutine initfields
@@ -232,6 +234,8 @@ subroutine initfields
 
     allocate(surf_rain(2:i1,2:j1))
 
+    allocate  (lsv_nudge_at_boundary (nsv))  !cstep
+
     um=0.;u0=0.;up=0.
     vm=0.;v0=0.;vp=0.
     wm=0.;w0=0.;wp=0.
@@ -268,6 +272,8 @@ subroutine initfields
     !$acc&                  dudxls, dudyls, dudtls, dvdxls, dvdyls, &
     !$acc&                  dvdtls, dthvdz, qvsl, qvsi, esl, qsat)
 
+    lsv_nudge_at_boundary = .false.
+
   end subroutine initfields
 
 !> Deallocate the fields
@@ -298,6 +304,7 @@ subroutine initfields
     deallocate(qvsl,qvsi,esl)
     deallocate(qsat)
     deallocate(surf_rain)
+    deallocate(lsv_nudge_at_boundary)
     end subroutine exitfields
 
 end module modfields

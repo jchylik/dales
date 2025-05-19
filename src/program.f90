@@ -179,6 +179,7 @@ program DALES
 #if defined(_OPENACC)
   use modgpu, only: update_gpu, host_is_updated
 #endif
+  use modspraying,     only : initspraying
 
   implicit none
 
@@ -231,12 +232,12 @@ program DALES
   call initcape
 
   call init_profiles
-
+  
+  call initspraying
 #if defined(_OPENACC)
   call update_gpu
 #endif
 
-  ! Startup is done, set flag to false
 
 !------------------------------------------------------
 !   3.0   MAIN TIME LOOP
@@ -312,6 +313,8 @@ program DALES
 !    call tiltedgravity
 
     call samptend(tend_addon)
+    if (lnudgeboundary ) call nudgeboundary
+
 
 !-----------------------------------------------------------------------
 !   3.7  PRESSURE FLUCTUATIONS, TIME INTEGRATION AND BOUNDARY CONDITIONS
@@ -425,6 +428,7 @@ program DALES
   call exitheterostats
   call exitcanopy
   call exittimestat
+  call exitnudgeboundary  !cstep
   call exitmodules
 
 
