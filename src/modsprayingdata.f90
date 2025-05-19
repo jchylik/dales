@@ -11,7 +11,7 @@ module modsprayingdata
 
   !< Set default value for water spraying
   !< Set default location
-  
+
   integer :: i_glob_spray = 2  !these are global grid points (numbering in the whole domain)
   integer :: j_glob_spray = 2
   integer :: k_glob_spray = 2
@@ -20,13 +20,14 @@ module modsprayingdata
   integer :: j_loc_spray = 2
   integer :: k_loc_spray = 2
 
-  real :: water_spray_rate = 1.    ! kg/sec water spraying excluding salt 
+  real :: water_spray_rate = 1.    ! kg/sec water spraying excluding salt
   real :: salt_spray_rate  = 0.030 ! kg/sec salt spraying
 
   real :: dqldt_spraying = 0.   ! convert water_spray_rate to local value in LES grid
   real :: dsvdt_spraying = 0.   ! convert salt spray rate to local value in LES grid
 
-  integer :: isv_salt = 1       ! changed to 3 if microphysics is used, (2 passive scalar fields for Nr and qr)
+  character(20) :: tracer = "salt" ! name of the sprayed scalar
+  integer :: isv_salt = -1
 
   real :: salinity = 0.03 ! this definition assumes 1 kg of sea water contains a mass of salt equal to salinity kg
 

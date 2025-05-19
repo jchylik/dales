@@ -313,7 +313,6 @@ program DALES
 !    call tiltedgravity
 
     call samptend(tend_addon)
-    if (lnudgeboundary ) call nudgeboundary
 
 
 !-----------------------------------------------------------------------
