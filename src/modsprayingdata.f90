@@ -8,7 +8,7 @@ module modsprayingdata
 
   logical :: lwater_spraying   = .false.     !< Switch to enable water and sea salt spraying
   logical :: lsalt_spraying    = .false.     !< Switch to enable sea salt spraying
-
+  logical :: lsalt_sponge      = .false.     !< Switch to enable nudging of salt to 0 at the boundary
   !< Set default value for water spraying
   !< Set default location
 
@@ -16,9 +16,9 @@ module modsprayingdata
   integer :: j_glob_spray = 2
   integer :: k_glob_spray = 2
 
-  integer :: i_loc_spray = 2
-  integer :: j_loc_spray = 2
-  integer :: k_loc_spray = 2
+  integer :: i_loc_spray = -999
+  integer :: j_loc_spray = -999
+  integer :: k_loc_spray = -999
 
   real :: water_spray_rate = 1.    ! kg/sec water spraying excluding salt
   real :: salt_spray_rate  = 0.030 ! kg/sec salt spraying

@@ -109,7 +109,7 @@ program DALES
   use modmicrophysics,   only : microsources
   use modsurface,        only : surface
   use modlsm,            only : lsm
-  use moddrydeposition,  only : drydep      
+  use moddrydeposition,  only : drydep
   use modsubgrid,        only : subgrid
   use modforces,         only : forces, coriolis, lstend
   use modradiation,      only : radiation
@@ -165,7 +165,7 @@ program DALES
   use modopenboundary, only : openboundary_ghost,openboundary_tend,openboundary_phasevelocity,openboundary_turb
   use modstat_profiles, only: init_profiles, sample_profiles, write_profiles
   use modibm,          only : applyibm, zerowallvelocity
-  use modibmdata,      only : lpoislast 
+  use modibmdata,      only : lpoislast
 !----------------------------------------------------------------
 !     0.2     USE STATEMENTS FOR TIMER MODULE
 !----------------------------------------------------------------
@@ -179,7 +179,7 @@ program DALES
 #if defined(_OPENACC)
   use modgpu, only: update_gpu, host_is_updated
 #endif
-  use modspraying,     only : initspraying
+  use modspraying,     only : lateralsponge
 
   implicit none
 
@@ -232,8 +232,7 @@ program DALES
   call initcape
 
   call init_profiles
-  
-  call initspraying
+
 #if defined(_OPENACC)
   call update_gpu
 #endif
@@ -332,6 +331,8 @@ program DALES
     call samptend(tend_pois,lastterm=.true.)
     if(lopenbc) call openboundary_phasevelocity()
 
+    call lateralsponge                          ! optional lateral sponge layer for scalars
+
     call tstep_integrate                        ! Apply tendencies to all variables
 
     call msebudg1
@@ -342,6 +343,8 @@ program DALES
     else
       call boundary
     endif
+
+
     !call tiltedboundary
 !-----------------------------------------------------
 !   3.8   LIQUID WATER CONTENT AND DIAGNOSTIC FIELDS
@@ -381,7 +384,7 @@ program DALES
     call msebudg2
     !call stressbudgetstat
     call heterostats
-    
+
     call testwctime
     call writerestartfiles
 #if defined(_OPENACC)
