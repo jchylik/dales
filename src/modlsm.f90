@@ -20,6 +20,7 @@
 module modlsm
     use netcdf
     use modprecision, only : field_r
+    use ieee_arithmetic, only: ieee_is_nan
     use modlsmdata
     implicit none
 
@@ -576,7 +577,7 @@ subroutine calc_canopy_resistance_ags
                 ! Gross assimilation rate (Am, IFS eq. 8.97)
                 Am = Ammax * (1 - exp(-(gm * (ci - co2_comp) / Ammax)))
                 
-                if(isnan(Am)) then
+                if(ieee_is_nan(Am)) then
                     tile(ilu)%rs(i,j) = 0.0
                 else
                     ! Autotrophic dark respiration (IFS eq. 8.99)

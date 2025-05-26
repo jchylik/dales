@@ -24,6 +24,7 @@
 
 module modemission
 use modprecision, only: field_r
+use ieee_arithmetic, only: ieee_is_nan
 use modemisdata
 use modtracers,       only : tracer_prop
 
@@ -1088,8 +1089,8 @@ contains
     ztop    = hs + 1.5 * hmax
 
     ! Fix invalid values
-    if (isnan(zbottom) .or. zbottom <= 0.0) zbottom = 1.0
-    if (isnan(ztop)) ztop = zbottom + min_plume_thickness
+    if (ieee_is_nan(zbottom) .or. zbottom <= 0.0) zbottom = 1.0
+    if (ieee_is_nan(ztop)) ztop = zbottom + min_plume_thickness
     if (ztop < zbottom) ztop = zbottom + min_plume_thickness
 
     !============================================================
