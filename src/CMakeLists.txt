@@ -12,7 +12,7 @@ set( dales_srcs
 	daleslib.f90
 	fftnew.f90
 	go.f90
-	le_drydepos_gas_depac.f90
+	le_drydepos_gas.f90
 	modAGScross.f90
 	modadvection.f90
 	modboundary.f90

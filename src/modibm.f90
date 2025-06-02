@@ -61,7 +61,8 @@ contains
                                fname_options, nsv, cu, cv, ijtot, &
                                iadv_mom,iadv_tke,iadv_thl,iadv_qt,iadv_sv,iadv_cd2, &
                                ibas_prf, &
-                               dx,dy,fkar
+                               dx,dy,fkar,&
+                               checknamelisterror
     use modmpi,         only : myid, comm3d, mpierr, myidx, myidy, d_mpi_bcast, excjs, D_MPI_ALLREDUCE, &
                                mpi_max, mpi_sum
     use modsurface,     only : lmostlocal
@@ -87,13 +88,7 @@ contains
 
       open (ifnamopt,file=fname_options,status='old',iostat=ierr)
       read (ifnamopt,NAMIBM,iostat=ierr)
-
-      if (ierr > 0) then
-        print *, 'Problem in namoptions NAMIBM'
-        print *, 'iostat error: ', ierr
-        stop 'ERROR: Problem in namoptions NAMIBM'
-      end if
-
+      call checknamelisterror(ierr, ifnamopt, 'NAMIBM')
       write (6,NAMIBM)
       close (ifnamopt)
 
@@ -141,11 +136,12 @@ contains
     call D_MPI_BCAST(lapply_ibm         ,    1, 0, comm3d, mpierr)
     call D_MPI_BCAST(lwallheat          ,    1, 0, comm3d, mpierr)  !zero (Cd->0) or nonzero heat flux from wall
     call D_MPI_BCAST(thlwall            ,    1, 0, comm3d, mpierr)
-    call D_MPI_BCAST(thlibm             ,    1, 0, comm3d, mpierr)  !cstep thl inside obstacle
+    call D_MPI_BCAST(thlibm             ,    1, 0, comm3d, mpierr)
     call D_MPI_BCAST(qtibm              ,    1, 0, comm3d, mpierr)
-    call D_MPI_BCAST(thlroof            ,    1, 0, comm3d, mpierr)  !cstep not used yet
+    call D_MPI_BCAST(thlroof            ,    1, 0, comm3d, mpierr)
     call D_MPI_BCAST(lpoislast          ,    1, 0, comm3d, mpierr)
     call D_MPI_BCAST(z0m_wall           ,    1, 0, comm3d, mpierr)
+    call D_MPI_BCAST(z0h_wall           ,    1, 0, comm3d, mpierr)
 
     !< Step out of further subroutine when IBM is switched off
     if (.not. (lapply_ibm)) return
@@ -232,9 +228,9 @@ contains
     !! xwall min yes/no     :   F     T     F     F     F
     !! xwall plus yes/no    :   F     F     F     F     T
 
-    !> Preset (temporary) arrays for wall indices (Nobst provides upper bound)
-    allocate(iobst (Nobst,3))                                                                     !< can be immediately set to correct size
-    allocate(tixw_p(Nobst,3), tixw_m(Nobst,3), tiyw_p(Nobst,3), tiyw_m(Nobst,3), tizw_p(Nobst,3)) !< for x- and y-walls in positive and negative directions
+    !> Preset (temporary) arrays for wall indices (Nobst [+i1 (or j1)*k1] provides upper bound)
+    allocate(iobst (Nobst,3))                                                                                             !< can be immediately set to correct size
+    allocate(tixw_p(Nobst+i1*k1,3), tixw_m(Nobst+i1*k1,3), tiyw_p(Nobst+j1*k1,3), tiyw_m(Nobst+j1*k1,3), tizw_p(Nobst,3)) !< for x- and y-walls in positive and negative directions
 
     Nxwalls_plus = 0; Nxwalls_min = 0; Nywalls_plus = 0; Nywalls_min = 0; Nzwalls_plus = 0
     !! Potential rework to get .not. statements out -> fill plus walls first

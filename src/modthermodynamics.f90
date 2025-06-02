@@ -397,7 +397,7 @@ contains
     call slabavg(qt0,fluid_mask,ih,qt0av)
     call slabavg(ql0,fluid_mask,ih,ql0av)
     do n=1,nsv
-      call slabavg(sv0(:,:,:,n),fluid_mask,ih,sv0av(1:1,n))
+      call slabavg(sv0(:,:,:,n),fluid_mask,ih,sv0av(:,n))
     end do
   end if
 
