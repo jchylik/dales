@@ -109,6 +109,7 @@ contains
     use modibm,            only : initibm
 
     use modchecksim,       only : chkdiv
+    use modspraying,       only : initspraying
 #if defined(_OPENACC)
     use modgpu,             only : initgpu
 #endif
@@ -352,6 +353,7 @@ contains
     call initfields
     call inittracers
     call initmicrophysics
+    call initspraying
     call allocate_tracers ! At this point, all tracers have to be defined
     call inittestbed    !reads initial profiles from scm_in.nc, to be used in readinitfiles
     call inittstep
