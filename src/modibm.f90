@@ -41,6 +41,8 @@ module modibm
   save
   private
 
+  public :: ixw_p, ixw_m, iyw_p, iyw_m, izw_p, iobst
+
   !< Later extendable to put different wall types in fortran types
   integer :: Nxwalls_plus, Nywalls_plus, Nzwalls_plus, Nxwalls_min, Nywalls_min, Nzwalls_min, Nobst
   integer, allocatable :: ixw_p(:,:), ixw_m(:,:), iyw_p(:,:), iyw_m(:,:), izw_p(:,:)!, izw_m(:,:)
