@@ -183,7 +183,7 @@ subroutine initbulkmicrostat
     tend_qtp(:) = 0.0
 
     if (.not. lprocblock) then
-    !$acc enter data copyin(tend_np, tend_qrp, Npmn, qrpmn, &
+    !$acc enter data copyin(tend_np, tend_qrp, tend_qtp, Npmn, qrpmn, &
     !$acc&                  Npav, qrpav, precav, preccountav, prec_prcav, &
     !$acc&                  cloudcountav, raincountav, Nrrainav, qrav, Dvrav, &
     !$acc&                  preccountmn, prec_prcmn, &
@@ -459,7 +459,7 @@ subroutine initbulkmicrostat
       tend_qtp(:) = 0.0
       !$acc end kernels
 
-      !$acc host_data use_device(tend_np, Nrp, tend_qrp, qrp)
+      !$acc host_data use_device(tend_np, Nrp, tend_qrp, qrp, tend_qtp, qtpmcr)
       call slabsum_multi(tend_np , 1,k1,Nrp  ,2,i1,2,j1,1,k1,2,i1,2,j1,1,k1, &
                          tend_qrp      ,qrp)
 
@@ -735,7 +735,7 @@ subroutine initbulkmicrostat
         if (lprocblock) then
           call exitstat_nc(ncid)
         else
-      !$acc exit data delete(tend_np, tend_qrp, Npmn, qrpmn, &
+      !$acc exit data delete(tend_np, tend_qrp, tend_qtp, Npmn, qrpmn, &
       !$acc&                 Npav, qrpav, precav, preccountav, prec_prcav, &
       !$acc&                 cloudcountav, raincountav, Nrrainav, qrav, Dvrav, &
       !$acc&                 preccountmn, prec_prcmn, &
