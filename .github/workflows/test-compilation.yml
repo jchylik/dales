@@ -32,6 +32,10 @@ jobs:
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
+
+      - name: Install NetCDF-C
+        run: |
+          sudo apt-get -y install libnetcdf-dev
       
       - name: Checkout NetCDF-Fortran repository
         if: matrix.toolchain.compiler != 'gcc'
