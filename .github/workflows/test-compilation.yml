@@ -1,0 +1,60 @@
+name: Compilation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain:
+          - {compiler: gcc, version: 13}
+          - {compiler: intel, version: '2025.0'}
+          - {compiler: nvidia-hpc, version: '25.1'}
+    
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
+      - name: "Setup MPI"
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: 'openmpi'
+        
+      - name: "Setup Fortran compiler"
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: ${{ matrix.toolchain.compiler }}
+          version: ${{ matrix.toolchain.version }}
+      
+      - name: Checkout NetCDF-Fortran repository
+        if: matrix.toolchain.compiler != 'gcc'
+        uses: actions/checkout@v2
+        with:
+          repository: Unidata/netcdf-fortran
+          ref: 4.4.4
+          path: netcdf-fortran
+
+      - name: Compile NetCDF-Fortran
+        if: matrix.toolchain.compiler != 'gcc'
+        run: |
+          cd netcdf-fortran
+          # FC should be defined correctly by the "setup Fortran compiler" step
+          NCDIR=/usr ./configure
+          sudo make -j 2
+          sudo make install
+
+      - name: Install NetCDF-Fortran
+        if: matrix.toolchain.compiler == 'gcc'
+        run: |
+          sudo apt-get -y install libnetcdff-dev
+
+      - name: Compile
+        run: |
+          mkdir build
+          cd build
+          FC=mpif90 cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+          make
