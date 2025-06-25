@@ -51,7 +51,7 @@ jobs:
           cd netcdf-fortran
           # FC should be defined correctly by the "setup Fortran compiler" step
           NCDIR=/usr FC=${{ env.FC }} ./configure
-          sudo make -j 2
+          sudo make FC=${{ env.FC }} -j 2
           sudo make install
 
       - name: Install NetCDF-Fortran
