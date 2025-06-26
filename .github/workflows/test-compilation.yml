@@ -53,6 +53,7 @@ jobs:
       - name: Setup MPI compiler wrapper (NVIDIA)
         if: matrix.toolchain.compiler == 'nvidia-hpc'
         run: |
+          which mpif90
           echo "MPI_COMPILER=/opt/nvidia/Linux_x86_64/hpc_sdk/25.1/comm_libs/mpi/bin/mpif90" >> "$GITHUB_ENV"
 
       - name: Install NetCDF-C
