@@ -22,16 +22,38 @@ jobs:
         with:
           submodules: 'true'
 
-      - name: "Setup MPI"
+      - name: "Install OpenMPI"
+        if: matrix.toolchain.compiler == 'gcc'
         uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'openmpi'
+
+      - name: "Install Intel MPI"
+        if: matrix.toolchain.compiler == 'intel'
+        uses: mpi4py/setup-mpi@v1
+        with:
+          mpi: 'intelmpi'
         
       - name: "Setup Fortran compiler"
         uses: fortran-lang/setup-fortran@v1
         with:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
+
+      - name: "Setup MPI compiler wrapper (GNU)"
+        if: matrix.toolchain.compiler == 'gcc'
+        run: |
+          echo "MPI_COMPILER=mpif90" >> "$GITHUB_ENV"
+
+      - name: "Setup MPI compiler wrapper (Intel)"
+        if: matrix.toolchain.compiler == 'intel'
+        run: |
+          echo "MPI_COMPILER=mpiifx" >> "$GITHUB_ENV"
+
+      - name: Setup MPI compiler wrapper (NVIDIA)
+        if: matrix.toolchain.compiler == 'nvidia-hpc'
+        run: |
+          echo "MPI_COMPILER=/opt/nvidia/Linux_x86_64/hpc_sdk/2025/comm_libs/mpi/bin/mpif90" >> "$GITHUB_ENV"
 
       - name: Install NetCDF-C
         run: |
@@ -49,7 +71,6 @@ jobs:
         if: matrix.toolchain.compiler != 'gcc'
         run: |
           cd netcdf-fortran
-          # FC should be defined correctly by the "setup Fortran compiler" step
           cmake -DCMAKE_Fortran_COMPILER=${{ env.FC }}
           make -j 2
           sudo make install
@@ -63,5 +84,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          OMPI_FC=${{ env.FC }} FC=mpif90 cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+          FC=${{ env.MPI_COMPILER}} cmake -DCMAKE_BUILD_TYPE=DEBUG ..
           make
