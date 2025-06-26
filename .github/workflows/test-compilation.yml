@@ -63,5 +63,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          FC=mpif90 cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+          OMPI_FC=${{ env.FC }} FC=mpif90 cmake -DCMAKE_BUILD_TYPE=DEBUG ..
           make
