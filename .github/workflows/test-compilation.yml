@@ -82,5 +82,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          FC=${{ env.MPI_COMPILER}} cmake -DCMAKE_BUILD_TYPE=DEBUG ..
-          make
+          FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+          make -j 2
