@@ -11,10 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sp_fields: ["OFF"]
-        sp_pois: ["OFF"]
-        openacc: ["OFF"]
-        hypre: ["OFF"]
+        features: ["-DENABLE_ACC=OFF -DENABLE_FP32_FIELDS=OFF -DENABLE_FP32_POIS=OFF -DENABLE_HYPRE=OFF"]
         toolchain:
           - {compiler: gcc, version: 13}
           - {compiler: intel, version: '2025.0'}
@@ -22,18 +19,17 @@ jobs:
         include:
           # GPU build
           - toolchain: {compiler: nvidia-hpc, version: '25.1'}
-            openacc: "ON"
+            features: "-DENABLE_ACC=ON"
           # Mixed precision builds
           - toolchain: {compiler: gcc, version: 13}
-            sp_fields: ["ON"]
+            features: "-DENABLE_FP32_FIELDS=ON"
           - toolchain: {compiler: gcc, version: 13}
-            sp_pois: ["ON"]
+            features: "-DENABLE_FP32_POIS=ON"
           - toolchain: {compiler: gcc, version: 13}
-            sp_fields: ["ON"]
-            sp_pois: ["ON"]
+            features: "-DENABLE_FP32_FIELDS=ON -DENABLE_FP32_POIS=ON"
           # With HYPRE
           - toolchain: {compiler: gcc, version: 13}
-            hypre: ["OFF"]
+            features: "-DENABLE_HYPRE=ON"
     
     steps:
       - name: "Checkout repository"
@@ -108,9 +104,6 @@ jobs:
           cd build
           FC=${{ env.MPI_COMPILER }} cmake \
             -DCMAKE_BUILD_TYPE=DEBUG \
-            -DENABLE_ACC=${{ matrix.openacc }} \
-            -DENABLE_FP32_FIELDS=${{ matrix.sp_fields }} \
-            -DENABLE_FP32_POIS=${{ matrix.sp_pois }} \
-            -DENABLE_HYPRE=${{ matrix.hypre }} \
+            ${{ matrix.features }} \ 
             ..
           make -j 2
