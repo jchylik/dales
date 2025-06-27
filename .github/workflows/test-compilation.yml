@@ -35,6 +35,10 @@ jobs:
           mpi: 'intelmpi'
 
       # NVIDIA includes OpenMPI in the NVHPC SDK
+
+      - name: "Install NetCDF-C"
+        run: |
+          sudo apt-get -y install libnetcdf-dev
         
       - name: "Setup Fortran compiler"
         uses: fortran-lang/setup-fortran@v1
