@@ -33,6 +33,8 @@ jobs:
         uses: mpi4py/setup-mpi@v1
         with:
           mpi: 'intelmpi'
+
+      # NVIDIA includes OpenMPI in the NVHPC SDK
         
       - name: "Setup Fortran compiler"
         uses: fortran-lang/setup-fortran@v1
@@ -40,25 +42,16 @@ jobs:
           compiler: ${{ matrix.toolchain.compiler }}
           version: ${{ matrix.toolchain.version }}
 
-      - name: "Setup MPI compiler wrapper (GNU)"
-        if: matrix.toolchain.compiler == 'gcc'
+      - name: "Setup MPI compiler command"
         run: |
-          echo "MPI_COMPILER=mpif90" >> "$GITHUB_ENV"
-
-      - name: "Setup MPI compiler wrapper (Intel)"
-        if: matrix.toolchain.compiler == 'intel'
-        run: |
-          echo "MPI_COMPILER=mpiifx" >> "$GITHUB_ENV"
-
-      - name: Setup MPI compiler wrapper (NVIDIA)
-        if: matrix.toolchain.compiler == 'nvidia-hpc'
-        run: |
-          which mpif90
-          echo "MPI_COMPILER=/opt/nvidia/Linux_x86_64/hpc_sdk/25.1/comm_libs/mpi/bin/mpif90" >> "$GITHUB_ENV"
-
-      - name: Install NetCDF-C
-        run: |
-          sudo apt-get -y install libnetcdf-dev
+          case ${{ matrix.toolchain.compiler }} in
+            intel)
+              echo "MPI_COMPILER=mpiifx" >> "$GITHUB_ENV"
+              ;;
+            gcc | nvidia-hpc)
+              echo "MPI_COMPILER=mpif90" >> "$GITHUB_ENV"
+              ;;
+          esac
       
       - name: Checkout NetCDF-Fortran repository
         if: matrix.toolchain.compiler != 'gcc'
