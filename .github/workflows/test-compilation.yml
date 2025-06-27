@@ -108,7 +108,7 @@ jobs:
           cd build
 
           if ${{ matrix.target == 'GPU' }}; then
-            export PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1/compilers/include:$PATH
+            export CUDAToolkit_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/25.1/
           fi
 
           FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG \
