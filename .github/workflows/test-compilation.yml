@@ -22,18 +22,18 @@ jobs:
           # GPU build
           - toolchain: {compiler: nvidia-hpc, version: '25.1'}
             target: "GPU"
-            prec: ["DP"]
-            hypre: ["OFF"]
+            prec: "DP"
+            hypre: "OFF"
           # Single precision build
           - toolchain: {compiler: gcc, version: 13}
             target: "CPU"
-            prec: ["SP"]
-            hypre: ["OFF"]
+            prec: "SP"
+            hypre: "OFF"
           # With HYPRE
           - toolchain: {compiler: gcc, version: 13}
             target: "CPU"
-            prec: ["DP"]
-            hypre: ["ON"]
+            prec: "DP"
+            hypre: "ON"
     
     steps:
       - name: "Checkout repository"
