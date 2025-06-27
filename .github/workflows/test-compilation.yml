@@ -11,7 +11,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        features: ["-DENABLE_ACC=OFF -DENABLE_FP32_FIELDS=OFF -DENABLE_FP32_POIS=OFF -DENABLE_HYPRE=OFF"]
         toolchain:
           - {compiler: gcc, version: 13}
           - {compiler: intel, version: '2025.0'}
@@ -94,7 +93,7 @@ jobs:
           sudo apt-get -y install libnetcdff-dev
 
       - name: Install HYPRE
-        if: matrix.hypre == 'ON'
+        if: matrix.features == '-DENABLE_HYPRE=ON'
         run: |
           sudo apt-get -y install libhypre-dev
 
@@ -102,8 +101,5 @@ jobs:
         run: |
           mkdir build
           cd build
-          FC=${{ env.MPI_COMPILER }} cmake \
-            -DCMAKE_BUILD_TYPE=DEBUG \
-            ${{ matrix.features }} \ 
-            ..
+          FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG ${{ matrix.features }} ..
           make -j 2
