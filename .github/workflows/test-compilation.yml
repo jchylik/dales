@@ -15,20 +15,25 @@ jobs:
           - {compiler: gcc, version: 13}
           - {compiler: intel, version: '2025.0'}
           - {compiler: nvidia-hpc, version: '25.1'}
+        target: ["CPU"]
+        prec: ["DP"]
+        hypre: ["OFF"]
         include:
           # GPU build
           - toolchain: {compiler: nvidia-hpc, version: '25.1'}
-            features: "-DENABLE_ACC=ON"
-          # Mixed precision builds
+            target: "GPU"
+            prec: ["DP"]
+            hypre: ["OFF"]
+          # Single precision build
           - toolchain: {compiler: gcc, version: 13}
-            features: "-DENABLE_FP32_FIELDS=ON"
-          - toolchain: {compiler: gcc, version: 13}
-            features: "-DENABLE_FP32_POIS=ON"
-          - toolchain: {compiler: gcc, version: 13}
-            features: "-DENABLE_FP32_FIELDS=ON -DENABLE_FP32_POIS=ON"
+            target: "CPU"
+            prec: ["SP"]
+            hypre: ["OFF"]
           # With HYPRE
           - toolchain: {compiler: gcc, version: 13}
-            features: "-DENABLE_HYPRE=ON"
+            target: "CPU"
+            prec: ["DP"]
+            hypre: ["ON"]
     
     steps:
       - name: "Checkout repository"
@@ -93,7 +98,7 @@ jobs:
           sudo apt-get -y install libnetcdff-dev
 
       - name: Install HYPRE
-        if: matrix.features == '-DENABLE_HYPRE=ON'
+        if: matrix.hypre == 'ON'
         run: |
           sudo apt-get -y install libhypre-dev
 
@@ -101,5 +106,10 @@ jobs:
         run: |
           mkdir build
           cd build
-          FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG ${{ matrix.features }} ..
+          FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG \
+            -DENABLE_ACC=${{ matrix.target == 'GPU' }} \
+            -DENABLE_FP32_FIELDS=${{ matrix.prec == 'SP' }} \
+            -DENABLE_FP32_POIS=${{ matrix.prec == 'SP' }} \
+            -DENABLE_HYPRE=${{ matrix.hypre }} \
+            ../
           make -j 2
