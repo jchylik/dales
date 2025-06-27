@@ -11,10 +11,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        sp_fields: ["OFF"]
+        sp_pois: ["OFF"]
+        openacc: ["OFF"]
+        hypre: ["OFF"]
         toolchain:
           - {compiler: gcc, version: 13}
           - {compiler: intel, version: '2025.0'}
           - {compiler: nvidia-hpc, version: '25.1'}
+        include:
+          # GPU build
+          - toolchain: {compiler: nvidia-hpc, version: '25.1'}
+            openacc: "ON"
+          # Mixed precision builds
+          - toolchain: {compiler: gcc, version: 13}
+            sp_fields: ["ON"]
+          - toolchain: {compiler: gcc, version: 13}
+            sp_pois: ["ON"]
+          - toolchain: {compiler: gcc, version: 13}
+            sp_fields: ["ON"]
+            sp_pois: ["ON"]
+          # With HYPRE
+          - toolchain: {compiler: gcc, version: 13}
+            hypre: ["OFF"]
     
     steps:
       - name: "Checkout repository"
@@ -78,9 +97,20 @@ jobs:
         run: |
           sudo apt-get -y install libnetcdff-dev
 
+      - name: Install HYPRE
+        if: matrix.hypre == 'ON'
+        run: |
+          sudo apt-get -y install libhypre-dev
+
       - name: Compile
         run: |
           mkdir build
           cd build
-          FC=${{ env.MPI_COMPILER }} cmake -DCMAKE_BUILD_TYPE=DEBUG ..
+          FC=${{ env.MPI_COMPILER }} cmake \
+            -DCMAKE_BUILD_TYPE=DEBUG \
+            -DENABLE_ACC=${{ matrix.openacc }} \
+            -DENABLE_FP32_FIELDS=${{ matrix.sp_fields }} \
+            -DENABLE_FP32_POIS=${{ matrix.sp_pois }} \
+            -DENABLE_HYPRE=${{ matrix.hypre }} \
+            ..
           make -j 2
