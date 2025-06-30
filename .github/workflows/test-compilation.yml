@@ -117,4 +117,5 @@ jobs:
             -DENABLE_FP32_POIS=${{ matrix.prec == 'SP' }} \
             -DENABLE_HYPRE=${{ matrix.hypre }} \
             ../
+
           make -j 2
